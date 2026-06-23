@@ -1,1006 +1,623 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>梅花易数 · 体用生克占卜</title>
-  <style>
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      min-height:100vh; background-color:#f5f0e8;
-      background-image:radial-gradient(ellipse at 30% 20%, rgba(194,59,34,0.03) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(44,44,44,0.02) 0%, transparent 50%);
-      font-family:"Noto Serif SC","Source Han Serif SC","SimSun","STSong","宋体",serif;
-      color:#2c2c2c; display:flex; align-items:center; justify-content:center; padding:20px;
-    }
-    .container {
-      width:100%; max-width:600px; background:rgba(255,252,245,0.9);
-      border-radius:18px; padding:36px 32px 32px; box-shadow:0 1px 30px rgba(44,44,44,0.06);
-    }
-    .header { text-align:center; margin-bottom:20px; }
-    .header h1 { font-size:24px; font-weight:500; letter-spacing:8px; color:#2c2c2c; }
-    .header .sub { font-size:12px; color:#8a8a8a; letter-spacing:4px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; margin-top:4px; }
-    .tab-bar { display:flex; justify-content:center; gap:4px; margin:18px auto 4px; padding:3px; background:rgba(44,44,44,0.04); border-radius:10px; max-width:400px; }
-    .tab-btn { flex:1; padding:6px 4px; font-size:12px; font-family:inherit; letter-spacing:2px; color:#8a8a8a; background:transparent; border:none; border-radius:8px; cursor:pointer; transition:all 0.25s ease; }
-    .tab-btn:hover { color:#6a6a6a; }
-    .tab-btn.active { color:#f5f0e8; background:#c23b22; box-shadow:0 1px 6px rgba(194,59,34,0.2); }
-    .tab-btn .tab-icon { display:block; font-size:14px; margin-bottom:1px; }
-    .taiji-overlay { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(247,242,233,0.85); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
-    .taiji-overlay.active { opacity:1; pointer-events:auto; }
-    .taiji { width:80px; height:80px; border-radius:50%; background:linear-gradient(to right, #c23b22 50%, #f7f2e9 50%); border:2px solid rgba(44,44,44,0.15); position:relative; animation:spin 1.5s cubic-bezier(0.4,0.0,0.2,1) forwards; box-shadow:0 0 40px rgba(194,59,34,0.08); }
-    .taiji::before { content:''; position:absolute; width:40px; height:40px; border-radius:50%; background:#c23b22; top:20px; left:20px; box-shadow:0 0 0 10px #f7f2e9; }
-    .taiji::after { content:''; position:absolute; width:12px; height:12px; border-radius:50%; background:#f7f2e9; top:14px; left:34px; box-shadow:32px 40px 0 #c23b22; }
-    @keyframes spin { 0% { transform:rotate(0deg) scale(0.6); opacity:0; } 30% { opacity:1; } 100% { transform:rotate(720deg) scale(1); opacity:1; } }
-    @keyframes pulseYao { 0%,100% { opacity:1; transform:scaleY(1); } 50% { opacity:0.7; transform:scaleY(1.3); } }
-    .taiji-text { margin-top:20px; font-size:15px; letter-spacing:6px; color:#c23b22; animation:fadePulse 1.2s ease infinite; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-    @keyframes fadePulse { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
-    .btn-area { text-align:center; margin:20px 0 4px; }
-    .btn-divine { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 48px; font-size:16px; font-family:inherit; letter-spacing:6px; color:#f5f0e8; background:linear-gradient(135deg,#c23b22 0%,#a8321d 100%); border:none; border-radius:40px; cursor:pointer; transition:all 0.3s ease; box-shadow:0 3px 18px rgba(194,59,34,0.25); overflow:hidden; }
-    .btn-divine::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%); pointer-events:none; }
-    .btn-divine::after { content:''; position:absolute; inset:1px; border-radius:49px; border:1px solid rgba(255,255,255,0.1); pointer-events:none; }
-    .btn-divine:hover { transform:translateY(-3px); box-shadow:0 8px 32px rgba(194,59,34,0.4); }
-    .btn-divine:active { transform:translateY(0) scale(0.96); box-shadow:0 2px 12px rgba(194,59,34,0.2); }
-    .btn-divine .btn-icon { font-size:18px; transition:transform 0.6s ease; }
-    .btn-divine:active .btn-icon { transform:rotate(180deg); }
-    .result { margin-top:24px; opacity:0; transform:translateY(16px); transition:opacity 0.6s ease,transform 0.6s ease; }
-    .result.visible { opacity:1; transform:translateY(0); }
-    .info-card { background:rgba(255,252,245,0.6); border:1px solid rgba(44,44,44,0.07); border-radius:12px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px 12px; margin-bottom:16px; }
-    .info-card .info-item .label { font-size:11px; color:#8a8a8a; letter-spacing:2px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-    .info-card .info-item .value { font-size:15px; color:#2c2c2c; letter-spacing:1px; margin-top:2px; }
-    .ganzhi-item { width:100%; text-align:center; border-top:1px solid rgba(44,44,44,0.04); padding-top:8px; margin-top:4px; }
-    .ganzhi-item .value { font-size:13px; letter-spacing:1px; }
-    .tiyong-card { background:rgba(255,252,245,0.7); border:1px solid rgba(194,59,34,0.1); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
-    .tiyong-card .tag { display:inline-block; padding:4px 14px; border-radius:6px; font-size:13px; letter-spacing:1px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; white-space:nowrap; }
-    .tiyong-card .tag.tag-body { background:rgba(44,44,44,0.06); color:#2c2c2c; }
-    .tiyong-card .tag.tag-use { background:rgba(194,59,34,0.08); color:#c23b22; }
-    .tiyong-card .tag.tag-shengke { padding:4px 18px; font-weight:500; font-size:14px; }
-    .tiyong-card .shengke-text { font-size:14px; color:#4a4a4a; line-height:1.7; flex:1; min-width:180px; }
-    .shengke-daji { color:#c23b22; } .shengke-xiaoji { color:#b8860b; }
-    .shengke-yali { color:#8b4513; } .shengke-xieqi { color:#6a6a6a; } .shengke-pingwen { color:#2c2c2c; }
-    .hexagram-show { text-align:center; padding:18px 0 16px; }
-    .hexagram-show .gua-row { display:flex; justify-content:center; align-items:center; gap:20px; }
-    .hexagram-show .gua-row + .gua-row { margin-top:4px; }
-    .gua-symbol { font-size:42px; line-height:1; transition:all 0.3s ease; }
-    .gua-label { font-size:14px; color:#8a8a8a; letter-spacing:2px; min-width:60px; }
-    .gua-arrow { font-size:18px; color:#c23b22; opacity:0.35; margin:0 6px; }
-    .hexagram-title { font-size:30px; font-weight:500; letter-spacing:8px; color:#2c2c2c; margin:18px 0 6px; text-align:center; }
-    .hexagram-sub { font-size:14px; color:#8a8a8a; letter-spacing:4px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-    .yao-hint { display:block; margin:10px auto 0; padding:4px 16px; font-size:13px; letter-spacing:2px; color:#c0392b; background:rgba(194,59,34,0.07); border-radius:16px; border:1px solid rgba(194,59,34,0.15); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; width:fit-content; }
-    .changed-area { margin-top:6px; padding:8px 0 4px; text-align:center; }
-    .changed-area .changed-label { font-size:11px; color:#8a8a8a; letter-spacing:2px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; display:inline; }
-    .changed-area .changed-name { display:inline; font-size:16px; letter-spacing:3px; color:#2c2c2c; margin-left:8px; }
-    .divider { width:100%; height:1px; background:linear-gradient(to right,transparent,rgba(44,44,44,0.06),transparent); margin:22px 0; }
-    .divider-light { width:100%; height:1px; background:linear-gradient(to right,transparent,rgba(44,44,44,0.05),transparent); margin:22px 0; }
-    .interp-section { padding:0; margin-top:6px; }
-    .interp-section .interp-title { font-size:15px; letter-spacing:3px; color:#a8321d; margin-bottom:14px; font-weight:700; }
-    .interp-section .interp-body { font-size:14px; line-height:2.0; color:#4a4a4a; text-align:justify; }
-    .interp-section .interp-body .keyword { color:#c23b22; font-weight:600; }
-    .interp-section .interp-body .section-label { color:#2c2c2c; font-weight:700; font-size:15px; display:block; margin-bottom:6px; }
-    .interp-section .interp-body .highlight-red { background:rgba(194,59,34,0.1); color:#a8321d; font-weight:600; padding:2px 8px; border-radius:4px; }
-    .interp-section .interp-body .card-para { background:#fdfcf8; border:1px solid rgba(44,44,44,0.06); border-radius:10px; padding:14px 16px; margin-bottom:12px; transition:box-shadow 0.2s ease; box-shadow:0 1px 4px rgba(44,44,44,0.03); }
-    .interp-section .interp-body .card-para:hover { box-shadow:0 3px 14px rgba(44,44,44,0.07); }
-    .interp-section .interp-body p { margin-bottom:14px; }
-    .interp-section .interp-body p:last-child { margin-bottom:0; }
-    .plain-block { background:rgba(194,59,34,0.03); padding:18px 22px; margin-top:2px; border-radius:10px; border-left:3px solid rgba(194,59,34,0.15); }
-    .plain-block .interp-body { font-size:14px; line-height:2.0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>二字起卦 · 梅花易数</title>
+<script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
+<script src="judgments.js"></script>
+<style>
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Noto Serif SC", "STSong", serif;
+    background: #f5f0e8;
+    color: #3d3229;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px 12px 60px;
+  }
+  .container {
+    max-width: 520px;
+    width: 100%;
+  }
 
-    /* —— 天机应期 —— */
-    .timing-box {
-      margin-top:24px; padding:16px 18px;
-      background:rgba(194,59,34,0.04);
-      border:1px solid rgba(194,59,34,0.12);
-      border-radius:10px;
-      border-left:4px solid #c23b22;
-    }
-    .timing-box .timing-title { font-size:15px; letter-spacing:3px; color:#a8321d; margin-bottom:10px; font-weight:700; }
-    .timing-box .timing-body { font-size:14px; line-height:2.0; color:#4a4a4a; }
+  /* ===== Header ===== */
+  .header {
+    text-align: center;
+    padding: 32px 0 24px;
+    border-bottom: 2px solid #d4c5b0;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    color: #5c3d2e;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.6);
+  }
+  .header .sub {
+    font-size: 13px;
+    color: #8a7a6a;
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
 
-    /* —— 爻线展示 —— */
-     .yao-panel { display:flex; justify-content:center; align-items:stretch; gap:36px; margin:16px 0 4px; }
-     .yao-panel .yao-column { display:flex; flex-direction:column; align-items:center; gap:0; min-width:70px; flex:1; }
-     .yao-panel .yao-column .yao-col-label { font-size:12px; color:#8a8a8a; letter-spacing:2px; margin-bottom:6px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-     .yao-column .yao-col-icon { font-size:16px; margin-right:4px; opacity:0.6; display:inline-block; }
-      .yao-column .yao-col-icon.variant { color:#c23b22; opacity:0.8; }
-     .yao-line { width:90px; height:18px; margin:3px 0; position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-     .yao-line .yao-bar { height:5px; border-radius:3px; display:inline-block; background:#2c2c2c; transition:all 0.3s ease; width:100%; }
-     .yao-line:hover .yao-bar { background:#555; }
-     .yao-line.yao-yin { display:flex; align-items:center; justify-content:center; gap:0; }
-     .yao-line.yao-yin .yao-bar { width:38px; flex:none; display:inline-block; }
-     .yao-line .yao-bar-gap { width:24px; flex:none; display:inline-block; }
-     .yao-line .yao-tag { position:absolute; right:-72px; font-size:10px; color:#c23b22; white-space:nowrap; letter-spacing:1px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; font-weight:600; opacity:0; transition:opacity 0.3s ease; pointer-events:none; }
-    .yao-line .yao-tag.show { opacity:1; }
-    .yao-line:hover .yao-tag { opacity:0.4; }
-    .yao-line:hover .yao-tag.show { opacity:1; }
-    .yao-line .yao-num { position:absolute; left:-30px; font-size:10px; color:#aaa; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-    .yao-line .yao-bar.highlight { background:#c23b22; box-shadow:0 0 12px rgba(194,59,34,0.3); animation:pulseYao 1.8s ease-in-out infinite; }
-    .yao-line:hover .yao-bar.highlight { background:#c0392b; box-shadow:0 0 16px rgba(194,59,34,0.5); animation:none; }
-    .yao-line.yao-yin .yao-bar.highlight { background:#c23b22; }
-    .yao-line.yao-yin .yao-bar.highlight::before { background:#c23b22; box-shadow:0 0 12px rgba(194,59,34,0.3); }
-    .yao-line.yao-yin:hover .yao-bar.highlight { background:#c0392b; }
+  /* ===== Card ===== */
+  .card {
+    background: #fffcf7;
+    border-radius: 12px;
+    padding: 24px 20px;
+    box-shadow: 0 2px 12px rgba(60,45,35,0.08);
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #7a6a5a;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ede6dc;
+    letter-spacing: 1px;
+  }
 
-    .yao-arrow-col { display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:16px; color:#c23b22; opacity:0.4; letter-spacing:4px; padding:0; }
+  /* ===== Input Area ===== */
+  .input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .input-group input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 2px solid #ddd2c4;
+    border-radius: 8px;
+    font-size: 18px;
+    font-family: inherit;
+    background: #fefcf9;
+    color: #3d3229;
+    outline: none;
+    transition: border-color .25s;
+    letter-spacing: 4px;
+    text-align: center;
+  }
+  .input-group input:focus {
+    border-color: #b8a088;
+  }
+  .input-group input::placeholder {
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #c4b8aa;
+  }
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    background: #8b6f50;
+    color: #fff;
+    letter-spacing: 4px;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #7a5e42; }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled {
+    background: #c4b8aa;
+    cursor: not-allowed;
+    transform: none;
+  }
 
-    /* —— 卦名小字 —— */
-    .hexagram-sub-detail { text-align:center; margin:2px 0 4px; }
-    .hexagram-sub-detail .sub-text { font-size:10px; color:#b4b4b4; letter-spacing:1px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-    .hexagram-sub-detail .sub-icon { font-size:10px; color:#c23b22; opacity:0.25; margin:0 2px; }
-    @media (max-width:520px) {
-      .container { padding:24px 18px 20px; border-radius:14px; }
-      .header h1 { font-size:20px; letter-spacing:6px; }
-      .tab-btn { font-size:11px; padding:5px 2px; }
-      .btn-divine { padding:12px 32px; font-size:15px; letter-spacing:4px; width:100%; }
-      .hexagram-title { font-size:24px; letter-spacing:6px; }
-      .gua-symbol { font-size:32px; }
-      .changed-area .gua-symbol { font-size:24px; }
-      .tiyong-card { flex-direction:column; align-items:flex-start; gap:8px; }
-      .info-card { flex-direction:column; align-items:flex-start; gap:6px; }
-      .taiji { width:60px; height:60px; }
-      .taiji::before { width:30px; height:30px; top:15px; left:15px; box-shadow:0 0 0 7px #f7f2e9; }
-      .taiji::after { width:9px; height:9px; top:11px; left:26px; box-shadow:24px 30px 0 #c23b22; }
-      .yao-line { width:70px; height:14px; margin:2px 0; }
-      .yao-line .yao-tag { right:-72px; font-size:9px; }
-      .yao-panel { gap:20px; }
-      .yao-line .yao-num { display:none; }
-      .yao-panel .yao-column { min-width:50px; }
-      .yao-line.yao-yin .yao-bar { width:30px; }
-      .yao-line .yao-bar-gap { width:16px; }
-    }
-    @media (max-width:380px) { .tab-bar { flex-wrap:wrap; border-radius:8px; } .tab-btn { flex:1 1 40%; font-size:10px; } }
-    .footer { margin-top:32px; text-align:center; font-size:8px; color:#d0d0d0; letter-spacing:2px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; border-top:1px solid rgba(44,44,44,0.02); padding-top:12px; }
-    .btn-divine.loading { pointer-events:none; opacity:0.7; }
-    .btn-divine.loading .btn-text { visibility:hidden; }
-    .btn-divine.loading .btn-text::after { content:'窥探天机…'; visibility:visible; position:absolute; left:50%; transform:translateX(-50%); }
-    .btn-divine.loading .btn-icon { animation:pulseIcon 0.8s ease infinite; }
-    @keyframes pulseIcon { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.3; transform:scale(0.8); } }
+  .error-msg {
+    color: #c0392b;
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 20px;
+  }
 
-    /* —— 意念输入框 —— */
-    .intent-area { margin:16px 0 14px; text-align:center; }
-    .intent-input { width:100%; padding:12px 18px; font-size:14px; font-family:inherit; color:#2c2c2c; background:rgba(255,252,245,0.8); border:1px solid rgba(44,44,44,0.08); border-radius:12px; outline:none; transition:all 0.3s ease; text-align:center; letter-spacing:1px; box-sizing:border-box; }
-    .intent-input::placeholder { color:#b8b8b8; letter-spacing:2px; font-size:13px; }
-    .intent-input:focus { border-color:#c23b22; box-shadow:0 0 0 3px rgba(194,59,34,0.08); background:rgba(255,252,245,0.95); }
-    .intent-input:focus::placeholder { color:transparent; }
+  /* ===== Result ===== */
+  .result-area { display: none; }
+  .result-area.show { display: block; }
 
-    /* —— 优雅弹窗 —— */
-    .toast-overlay { position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; background:rgba(44,44,44,0.15); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity 0.4s ease; }
-    .toast-overlay.active { opacity:1; pointer-events:auto; }
-    .toast-box { background:rgba(255,252,245,0.95); border-radius:16px; padding:28px 32px; max-width:340px; text-align:center; box-shadow:0 4px 30px rgba(44,44,44,0.12); transform:scale(0.9); transition:transform 0.4s ease; }
-    .toast-overlay.active .toast-box { transform:scale(1); }
-    .toast-box .toast-icon { font-size:32px; margin-bottom:12px; display:block; }
-    .toast-box .toast-text { font-size:15px; color:#4a4a4a; line-height:1.8; letter-spacing:1px; margin-bottom:18px; }
-    .toast-box .toast-btn { padding:8px 32px; font-size:14px; font-family:inherit; letter-spacing:3px; color:#f5f0e8; background:#c23b22; border:none; border-radius:24px; cursor:pointer; transition:all 0.3s ease; }
-    .toast-box .toast-btn:hover { background:#a8321d; }
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    margin-bottom: 16px;
+  }
+  .result-item {
+    padding: 6px 0;
+    font-size: 14px;
+    border-bottom: 1px dashed #ede6dc;
+  }
+  .result-item .label {
+    color: #8a7a6a;
+    font-size: 12px;
+  }
+  .result-item .value {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 2px;
+    color: #3d3229;
+  }
+  .result-item .value .tag {
+    display: inline-block;
+    background: #f0e8de;
+    padding: 1px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-left: 6px;
+    color: #6a5a4a;
+  }
 
-    /* —— 墨迹渐显特效 —— */
+  .yao-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #5c4a3a;
+    margin: 18px 0 10px;
+    text-align: center;
+    letter-spacing: 2px;
+  }
 
-    /* —— 综合运势引导提示 —— */
-    .overall-hint { text-align:center; margin:20px 0 6px; padding:14px 18px; border-radius:10px; background:rgba(194,59,34,0.04); border:1px dashed rgba(194,59,34,0.15); }
-    .overall-hint .hint-icon { font-size:16px; display:block; margin-bottom:6px; }
-    .overall-hint .hint-text { font-size:12px; color:#8a8a8a; letter-spacing:2px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; animation:hintPulse 2.4s ease-in-out infinite; }
-    @keyframes hintPulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+  /* ===== Yao Diagram (六爻图) ===== */
+  .yao-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 0;
+  }
+  .yao-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .yao-line {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: #5c4a3a;
+  }
+  .yao-line.yang {
+    width: 160px;
+  }
+  .yao-line.yin {
+    width: 160px;
+    background: transparent;
+    border-top: 2px solid #5c4a3a;
+    border-bottom: 2px solid #5c4a3a;
+    height: 2px;
+    border-radius: 0;
+  }
+  .yao-label {
+    font-size: 11px;
+    color: #8a7a6a;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .yao-active .yao-label {
+    color: #c0392b;
+    font-weight: 700;
+  }
+  .yao-active .yao-line.yang {
+    background: #c0392b;
+  }
+  .yao-active .yao-line.yin {
+    border-color: #c0392b;
+  }
 
-    /* —— 深度剖析补充段 —— */
-    .deep-analysis { margin-top:4px; }
+  /* ===== Judgment ===== */
+  .judgment-box {
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: #f8f2ea;
+    border-radius: 8px;
+    border-left: 3px solid #b8a088;
+  }
+  .judgment-box .label {
+    font-size: 12px;
+    color: #8a7a6a;
+    letter-spacing: 1px;
+  }
+  .judgment-box .text {
+    font-size: 15px;
+    line-height: 1.7;
+    margin-top: 6px;
+    color: #4d3a2a;
+  }
 
-    /* —— 天机卡片保存 —— */
-    .save-btn-area { text-align:center; margin:20px 0 4px; }
-    .btn-save { display:inline-flex; align-items:center; gap:8px; padding:10px 28px; font-size:13px; font-family:inherit; letter-spacing:3px; color:#8a8a8a; background:transparent; border:1px solid rgba(44,44,44,0.1); border-radius:30px; cursor:pointer; transition:all 0.3s ease; }
-    .btn-save:hover { color:#c23b22; border-color:rgba(194,59,34,0.2); background:rgba(194,59,34,0.03); }
-    .btn-save:active { transform:scale(0.96); }
+  /* ===== Loading ===== */
+  .loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ddd2c4;
+    border-top-color: #8b6f50;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* —— 分享卡片（隐藏，用于截图） —— */
-    .share-card { position:fixed; left:-9999px; top:0; width:600px; padding:40px 36px; background:linear-gradient(135deg,#f7f2e9 0%,#fdf8f0 100%); border:1px solid rgba(194,59,34,0.1); border-radius:16px; box-shadow:0 4px 40px rgba(44,44,44,0.1); }
-    .share-card .share-header { text-align:center; margin-bottom:24px; }
-    .share-card .share-header .share-seal { width:48px; height:48px; border:2px solid #c23b22; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; color:#c23b22; font-size:11px; letter-spacing:2px; writing-mode:vertical-rl; background:rgba(194,59,34,0.03); transform:rotate(2deg); margin-bottom:12px; font-family:"KaiTi","STKaiti","楷体",serif; }
-    .share-card .share-header .share-title { font-size:22px; letter-spacing:6px; color:#2c2c2c; font-weight:500; }
-    .share-card .share-header .share-sub { font-size:11px; color:#8a8a8a; letter-spacing:3px; margin-top:4px; }
-    .share-card .share-info { display:flex; justify-content:space-between; padding:12px 16px; background:rgba(255,252,245,0.6); border-radius:10px; margin-bottom:16px; font-size:13px; color:#4a4a4a; }
-    .share-card .share-info span { color:#2c2c2c; }
-    .share-card .share-hexagram { text-align:center; margin:16px 0; }
-    .share-card .share-hexagram .share-hexa-name { font-size:28px; letter-spacing:6px; color:#2c2c2c; }
-    .share-card .share-hexagram .share-hexa-sub { font-size:12px; color:#8a8a8a; margin-top:4px; }
-    .share-card .share-hexagram .share-yao { font-size:13px; color:#c23b22; background:rgba(194,59,34,0.06); display:inline-block; padding:3px 14px; border-radius:14px; margin-top:8px; }
-    .share-card .share-shengke { text-align:center; padding:10px; background:rgba(194,59,34,0.03); border-radius:8px; margin:12px 0; font-size:14px; color:#4a4a4a; border-left:3px solid #c23b22; }
-    .share-card .share-footer { text-align:center; font-size:10px; color:#b0b0b0; letter-spacing:2px; margin-top:20px; padding-top:16px; border-top:1px solid rgba(44,44,44,0.04); }
-
-    /* —— 天机震撼弹窗 —— */
-    .oracle-overlay { position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; background:rgba(44,44,44,0.18); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity 0.6s ease; padding:20px; }
-    .oracle-overlay.active { opacity:1; pointer-events:auto; }
-    .oracle-card { width:100%; max-width:540px; max-height:85vh; overflow-y:auto; background:linear-gradient(135deg,#faf6ee 0%,#f7f0e5 100%); border-radius:18px; padding:40px 34px 32px; box-shadow:0 8px 50px rgba(44,44,44,0.12); transform:translateY(20px) scale(0.97); transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s ease; opacity:0; border:1px solid rgba(194,59,34,0.08); position:relative; }
-    .oracle-overlay.active .oracle-card { transform:translateY(0) scale(1); opacity:1; }
-    .oracle-card::-webkit-scrollbar { width:3px; }
-    .oracle-card::-webkit-scrollbar-thumb { background:#c23b22; border-radius:4px; }
-    .oracle-card .oracle-seal { position:absolute; top:28px; right:28px; width:44px; height:44px; border:2px solid rgba(194,59,34,0.15); border-radius:6px; display:flex; align-items:center; justify-content:center; color:#c23b22; font-size:9px; letter-spacing:2px; writing-mode:vertical-rl; font-family:"KaiTi","STKaiti","楷体",serif; transform:rotate(3deg); opacity:0.6; }
-    .oracle-card .oracle-title { font-size:17px; letter-spacing:4px; color:#a8321d; font-weight:600; margin-bottom:6px; text-align:center; }
-    .oracle-card .oracle-sub { font-size:11px; color:#a0a0a0; letter-spacing:3px; text-align:center; margin-bottom:22px; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-    .oracle-card .oracle-divider { width:40px; height:2px; background:#c23b22; margin:0 auto 22px; opacity:0.3; border-radius:2px; }
-    .oracle-card .oracle-body { font-size:14.5px; line-height:2.2; color:#3a3a3a; text-align:justify; margin-bottom:24px; padding:0 4px; }
-    .oracle-card .oracle-body .keyword { color:#c23b22; font-weight:600; }
-    .oracle-card .oracle-btn { display:block; margin:0 auto; padding:12px 40px; font-size:14px; font-family:inherit; letter-spacing:4px; color:#f5f0e8; background:linear-gradient(135deg,#c23b22 0%,#a8321d 100%); border:none; border-radius:30px; cursor:pointer; transition:all 0.3s ease; box-shadow:0 3px 18px rgba(194,59,34,0.2); }
-    .oracle-card .oracle-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(194,59,34,0.3); }
-    .oracle-card .oracle-btn:active { transform:scale(0.96); }
-    @media (max-width:520px) { .oracle-card { padding:28px 20px 24px; } .oracle-card .oracle-title { font-size:15px; } .oracle-card .oracle-body { font-size:14px; } }
-  </style>
+  /* ===== Responsive ===== */
+  @media (max-width: 420px) {
+    .header h1 { font-size: 26px; letter-spacing: 6px; }
+    .input-group { flex-direction: column; }
+    .input-group input { width: 100%; font-size: 16px; }
+    .btn { width: 100%; }
+    .result-grid { grid-template-columns: 1fr; }
+    .yao-line.yang, .yao-line.yin { width: 120px; }
+    .card { padding: 18px 14px; }
+  }
+</style>
 </head>
 <body>
-  <div class="taiji-overlay" id="taijiOverlay">
-    <div class="taiji"></div>
-    <div class="taiji-text">窥 探 天 机</div>
+<div class="container">
+
+  <!-- ===== Header ===== -->
+  <div class="header">
+    <h1>二字起卦</h1>
+    <div class="sub">梅 花 易 数 · 随 心 而 占</div>
   </div>
-  <div class="container">
-    <div class="header">
-      <h1>梅花易数</h1>
-      <div class="sub">时 间 起 卦 · 体 用 生 克</div>
-    </div>
-    <div class="tab-bar" id="tabBar">
-      <button class="tab-btn active" data-scene="overall"><span class="tab-icon">☯</span>综合运势</button>
-      <button class="tab-btn" data-scene="wealth"><span class="tab-icon">💰</span>财富求财</button>
-      <button class="tab-btn" data-scene="love"><span class="tab-icon">♥</span>情感桃花</button>
-      <button class="tab-btn" data-scene="career"><span class="tab-icon">⚙</span>事业工作</button>
-    </div>
-    <div class="intent-area">
-      <input class="intent-input" id="intentInput" type="text" placeholder="☰ 闭眼冥想三秒，输入任意数字或一句话凝聚意念">
-    </div>
-    <div class="btn-area">
-      <button class="btn-divine" id="btnDivine"><span class="btn-icon">✦</span><span class="btn-text">一 键 起 卦</span></button>
-    </div>
-    <div class="result" id="resultArea">
-      <div class="info-card">
-        <div class="info-item"><div class="label">农 历</div><div class="value" id="lunarDisplay">—</div></div>
-        <div class="info-item"><div class="label">时 辰</div><div class="value" id="shichenDisplay">—</div></div>
-        <div class="info-item ganzhi-item"><div class="label">日 干 支</div><div class="value" id="ganzhiDisplay">—</div></div>
-      </div>
-      <div class="tiyong-card">
-        <span class="tag tag-body" id="bodyTag">体 · 乾</span>
-        <span style="font-size:13px;color:#8a8a8a;">⇄</span>
-        <span class="tag tag-use" id="useTag">用 · 坤</span>
-        <span class="tag tag-shengke" id="shengkeTag">比和卦</span>
-        <div class="shengke-text" id="shengkeText">伙伴相助，顺其自然。</div>
-      </div>
-      <!-- 六爻展示（CSS绘制） -->
-      <div class="yao-panel" id="yaoPanel">
-        <div class="yao-column" id="originalYaoCol">
-          <div class="yao-col-label">本卦</div>
-          <div id="yaoLines"></div>
-          <div class="hexagram-sub-detail" id="hexagramSubDetail">
-            <span class="sub-icon">☰</span>
-            <span class="sub-text" id="subDetailText">上乾下乾</span>
-            <span class="sub-icon">☰</span>
-          </div>
-        </div>
-        <div class="yao-arrow-col">⚲<br>▸</div>
-        <div class="yao-column" id="changedYaoCol">
-          <div class="yao-col-label"><span class="yao-col-icon variant">⟁</span> 变卦</div>
-          <div id="changedYaoLines"></div>
-          <div class="hexagram-sub-detail" id="changedSubDetail">
-            <span class="sub-icon">☰</span>
-            <span class="sub-text" id="changedSubText">上乾下乾</span>
-            <span class="sub-icon">☰</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="hexagram-title" id="hexagramName">乾为天</div>
-      <div class="yao-hint" id="yaoHint">— 初爻动 —</div>
-      <div class="changed-area" id="changedArea">
-        <div class="changed-label">⚲ 变卦</div>
-        <div class="changed-name" id="changedName">乾为天</div>
-      </div>
-      <div class="divider"></div>
-      <div class="interp-section">
-        <div class="interp-title">⚲ 卦辞精解</div>
-        <div class="interp-body" id="classicInterp">点击「一键起卦」，启卦观象。</div>
-      </div>
-      <div class="divider-light"></div>
-      <div class="interp-section plain-block">
-        <div class="interp-title">⚲ 白话详解</div>
-        <div class="interp-body" id="plainInterp">根据您选择的场景，输出对应的白话解卦。</div>
-      </div>
-
-      <!-- 天机应期 -->
-      <div class="timing-box" id="timingBox" style="display:none;">
-        <div class="timing-title">⚲ 天机应期</div>
-        <div class="timing-body" id="timingBody">根据时空能量推算中…</div>
-      </div>
+  <!-- ===== Input Card ===== -->
+  <div class="card">
+    <div class="card-title">✦ 输入二字</div>
+    <div class="input-group">
+      <input type="text" id="charInput" placeholder="请输入两个汉字" autocomplete="off">
+      <button class="btn" id="submitBtn">起卦</button>
     </div>
-    <div class="footer">以 时 为 卦 · 观 象 知 变 · 体 用 生 克</div>
-    <div class="save-btn-area">
-      <button class="btn-save" id="btnSaveCard">⚲ 汇聚磁场 · 保存天机卡片</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- ===== Result Card ===== -->
+  <div class="card result-area" id="resultArea">
+    <div class="card-title">✦ 本次起卦结果</div>
+
+    <!-- Info Grid -->
+    <div class="result-grid" id="resultGrid"></div>
+
+    <!-- Hexagram Diagram -->
+    <div class="yao-section-title">▎本卦 · <span id="originalName"></span></div>
+    <div class="yao-diagram" id="originalYao"></div>
+
+    <!-- Judgment -->
+    <div class="judgment-box" id="judgmentBox">
+      <div class="label" id="judgmentLabel">爻辞</div>
+      <div class="text" id="judgmentText"></div>
     </div>
   </div>
 
-  <!-- 隐藏的分享卡片（用于截图） -->
-  <div class="share-card" id="shareCard">
-    <div class="share-header">
-      <div class="share-seal">梅 花 易 数</div>
-      <div class="share-title">梅花易数 · 占卜结果</div>
-      <div class="share-sub">时 间 起 卦 · 体 用 生 克</div>
-    </div>
-    <div class="share-info">
-      <div>农历 <span id="shareLunar">—</span></div>
-      <div>时辰 <span id="shareShichen">—</span></div>
-    </div>
-    <div class="share-hexagram">
-      <div class="share-hexa-name" id="shareHexagramName">乾为天</div>
-      <div class="share-hexa-sub" id="shareHexagramSub">上乾下乾</div>
-      <div class="share-yao" id="shareYao">初爻动</div>
-    </div>
-    <div class="share-shengke" id="shareShengke">体 · 乾 ⇄ 用 · 坤 — 比和卦 · 平稳</div>
-    <div class="share-footer">以 时 为 卦 · 观 象 知 变 · 体 用 生 克</div>
-  </div>
-
-  <!-- 天机震撼弹窗 -->
-  <div class="oracle-overlay" id="oracleOverlay">
-    <div class="oracle-card">
-      <div class="oracle-seal">天 机 揭 示</div>
-      <div class="oracle-title">⚲ 时空定格 · 当下身心状态大剖析</div>
-      <div class="oracle-sub">— 隔 空 映 照 · 来 人 不 用 问 —</div>
-      <div class="oracle-divider"></div>
-      <div class="oracle-body" id="oracleBody">天机正在加载中…</div>
-      <button class="oracle-btn" id="oracleBtn">领悟天机 · 开启各板块微调</button>
-    </div>
-  </div>
-
-  <!-- 优雅弹窗 -->
-  <div class="toast-overlay" id="toastOverlay">
-    <div class="toast-box">
-      <span class="toast-icon">☰</span>
-      <div class="toast-text">天机不润无心之人，请随意输入一个字或数字以凝聚磁场。</div>
-      <button class="toast-btn" id="toastBtn">知道了</button>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-  <script>
-var hexagramData = {"1,1": {"name": "乾为天", "classic": "<strong>乾为天 · 卦辞精解</strong><br><br>天行健君子以自强不息。大吉之兆。", "overall": "【现状剖析】你浑身上下透着一股压不住的锐气像正午十二点的太阳一样耀眼。开会时你一开口别人自动安静走在路上腰板笔直连最近的运气都好得让人嫉妒。但你最近是不是觉得谁都配不上你的标准？团队里已经在背后议论你太独断了。你的自信正在变成自负水满则溢的道理你应该懂。\n\n【体用天机】乾为天六爻皆阳你此刻的能量纯粹而强大。这不是凭空来的是你过去半年不断死磕换来的爆发期。上天赏饭的时候你得张嘴接着。当前最关键的是相信你的第一直觉——你在商业判断上的第六感现在准得可怕别用理性去推翻它。直觉是老天爷给你的密码你不信它信什么？\n\n【变卦警示】亢龙有悔这四个字请你刻在脑门上。顺风局最容易翻车的地方不是能力不够而是你飘了。最近两周不要跟一直默默支持你的老同事甩脸色你的傲慢正在消耗别人对你的容忍度。站得越高摔下来的时候越疼保持谦逊是你对自己最大的保护。", "wealth": "【财运趋势】正财运旺到令人嫉妒。乾卦代表天和权力近期财富藏在高处——老板赏识行业曝光平台合作。你随便谈的单子可能是别人半年的业绩。钱追着气场强的人跑你现在就是那个气场最强的人。但赚得多花得更猛的毛病你得改改了。\n\n【细节断语】乾卦的健意味着极速周转。上周进账一笔钱转头就换了最新设备请客吃饭一顿顶普通人半月工资。这种消费背后是补偿心理——觉得自己太辛苦了该犒劳自己。但犒劳频率已经快赶上赚钱速度了这不是犒劳是挥霍你心里很清楚只是不想控制而已。\n\n【避坑指南】面子和排场是这阶段最大的财富杀手。你那些酒局上的兄弟真正在你落难时能拉你一把的有几个？趁现在运势好强制把每笔收入的30%划入一个取不出来的账户。落袋为安这四个字值千金。别让自己的虚荣心变成别人眼里的笑话。", "love": "【感情现状】你最近在感情里像一只开屏的孔雀自信迷人但也过于自我中心。单身的朋友身边至少有两三个对你有意思的人但你总拿高标准去比结果一个都看不上。有伴侣的请回想一下你上次耐心听对方讲完一天的烦心事是什么时候？你已经把对方的好当成理所当然很久了。\n\n【桃花指引】你现在处在吸引力最强的时期但问题是你太享受被追捧的感觉了反而忘了感情需要低头和倾听。那个一直约你但你总找借口推掉的人不妨给一次机会。试着把对方的需求放在你的日程表前面一次你会发现关系的温度会回暖很多。感情是双向的奔赴不是单向的崇拜。\n\n【避坑指南】你最大的问题不是没人爱而是你太爱自己了。感情不是职场不需要你时刻占据主导地位。试着放低姿态一次你会发现当你不再那么用力的时候关系反而变得更轻松了。放低姿态不是认输而是给爱一个进来的缝隙。", "career": "【工作状态】你现在的职场状态势不可挡。老板看你的眼神都带着光。你最近在推进的项目虽然阻力不小但你每出一招都能精准打在痛点上。这是你多年积累在集中兑现的时刻。但站得越高的人往往最看不清脚下的路那些在背后看着你的人可能在等你犯错。\n\n【细节断语】但你最近有一个致命的坏习惯——独断专行。上周开会有人提不同意见被你当场怼了回去团队里已经出现了沉默的抵触情绪。水能载舟亦能覆舟你的职场命运掌握在那些沉默的人手里。别让你的能力成为别人离开的理由。\n\n【避坑指南】你现在最该做的是收敛锋芒。功劳别一个人全占了分一些给团队。决策之前哪怕你心里已经有答案也假装问一下别人的意见。这不仅不会削弱权威反而会让别人觉得你格局大。真正的强者不需要通过压制别人来证明自己。"}, "1,2": {"name": "天泽履", "classic": "<strong>天泽履 · 卦辞精解</strong><br><br>履虎尾不咥人。慎行则吉。", "overall": "【现状剖析】你现在每走一步都在薄冰上跳舞周围全是盯着你的眼睛。每一个决定都被放在放大镜下审视说错一句话就可能被人抓住把柄。这种高压下你选择了最安全的策略——做一只沉默的鸵鸟。但沉默解决不了问题你越是躲着走别人就越觉得你好欺负。该表态的时候不要沉默该亮剑的时候不要退缩。\n\n【体用天机】履卦上乾下兑上面有权威盯着你下面有资源托着你。最安全的策略就是循规蹈矩按流程办事尊重层级。只要你保持礼貌和谨慎就能平稳过关。这次经历虽然惊险但会极大地提升你的心理素质。扛过去之后你的抗压能力会上一个大台阶。\n\n【变卦警示】压力大是正常的。只要你不越界不失礼这关就能平稳过去。扛过去之后你的心理素质会提升一个档次。以后再遇到风浪你都能从容应对。那些刚开始让你觉得过不去的坎最后都变成了你跟别人吹牛的资本。", "wealth": "【财运趋势】最近的财运属于典型的陷阱型。看起来有好几个项目能让你大赚一笔但每个合同里都藏着让你未来吃大亏的坑。尤其要警惕那些稳赚不赔的好事。世界上没有免费的午餐这句话你从小听到大但当利益摆在面前的时候你还是会犹豫。那些太好的事情背后往往藏着你看不见的成本。\n\n【细节断语】特别要注意合同细节。看起来越美好的条件往往藏着越多陷阱。近期不要做任何冒险性质的投资。你的财运密码是慢和稳。稳稳当当把手头业务做好比追求暴利安全得多。慢不是怂而是一种通透的智慧。真正赚过大钱的人都知道快钱来得快去得也快。\n\n【避坑指南】如果有人游说你参与稳赚不赔的项目请直接拒绝。宁愿少赚也不要贪快。在看不清楚的时候什么都不做就是最好的策略。不行动本身就是最好的行动这句话不是什么人都能理解的但你最好现在就开始学着理解。", "love": "【感情现状】你在感情中处于让人心累的试探期。单身者可能正在暗恋某人但不敢迈出那一步。有伴侣的在小心翼翼维护关系生怕哪句话说错。但这种过度的小心翼翼反而让你显得疏远。感情里最怕的不是犯错而是因为怕犯错而什么都不做。你这种如履薄冰的状态对方也能感受到。\n\n【桃花指引】真诚和礼貌是最好的名片。先建立信任感比急于表白重要得多。对方也在观察你每一个细节都在对方的评分表上。不要急于推进等信任到位了自然水到渠成。那些看似平淡的日常相处才是感情真正的基础。装出来的完美撑不过三个月真实能走一辈子。\n\n【避坑指南】不要因为过于小心翼翼而显得疏远或冷淡。保持自然的互动适当的关心比刻意讨好效果好得多。做真实的自己是最好的策略。你真实的模样虽然不完美但一定比伪装出来的样子可爱得多。", "career": "【工作状态】你在职场中走的是如履薄冰的路线。领导和同事都在密切关注你每一步都要走得稳。按部就班是最好的策略把分内工作做扎实比追求出彩更重要。现在的积累在为你的未来晋升打基础。每一件做好的小事都在为你的职业信誉添砖加瓦。\n\n【细节断语】现在不是搞创新或改革的时候。把分内工作做扎实做到位比追求出彩更重要。现在的积累是在为你未来的晋升打基础。那些看似无聊的重复工作都是在为你打下坚实的地基。没有地基的大楼盖得再高也会塌。\n\n【避坑指南】不要在背后议论同事也不要站队。保持中立专业可靠的职业形象。这关过后你会获得更多信任。管住嘴迈开腿职场生存法则就是这么简单。那些在办公室里搞小动作的人最后都没有好下场。"}, "1,3": {"name": "天火同人", "classic": "<strong>天火同人 · 卦辞精解</strong><br><br>与人同者物必归焉。团结则吉。", "overall": "【现状剖析】你一个人撑着太累了该学会借力了。不是能力不够而是你习惯把所有事都往自己肩上扛。你总觉得别人做的不如你好但不放手让别人试错你就永远被困在执行者的角色里出不来。你现在的号召力正在达到顶峰身边有很多愿意支持你的人只是你还没学会开口求助。\n\n【体用天机】你的号召力和影响力正在发挥作用。你身边有很多愿意支持你的人只是你以前习惯了一个人扛没开口求助。现在就是打开心扉建立联盟的最佳时机。你不需要一个人走完所有的路那些愿意陪你走的人一直在等你开口。一个人走得快但一群人走得远。\n\n【变卦警示】团结不等于放弃原则合作也不等于一味妥协。找到志同道合的伙伴很重要但在合作中也要守住自己的底线。好的合作关系是1+1大于2而不是你单方面付出。任何让你感到不平等的合作关系都值得重新审视。", "wealth": "【财运趋势】合作生财是你近期的财富密码。你所有的机会几乎都来自于人——合伙人团队社交关系。一个人的力量有限但众人拾柴火焰高。不要害怕分享利益懂得分钱的人才能赚到大钱。那些越做越大的生意没有一个是可以一个人吃独食的。\n\n【细节断语】适合组建团队开展合作项目或者加入优质圈子。分享利益才能撬动更大的资源。近期也可能通过朋友介绍获得不错的副业机会。你的社交圈就是你最大的财富矿藏。你认识的每一个人都可能成为未来赚钱路上的合作伙伴。\n\n【避坑指南】合作虽好但合同必须写清楚。亲兄弟也要明算账。在利益分配上提前达成共识能避免百分之九十的纠纷。口头约定在这个时代就是一颗定时炸弹。能经得起利益考验的才是真正的合作伙伴。", "love": "【感情现状】你的感情运势与社交活动紧密相关。近期的缘分大概率出现在群体活动中——朋友聚会工作社交兴趣社群。请多走出去参加集体活动缘分不会自己送上门来。那些窝在家里刷手机等爱情的人最后等来的只有颈椎病和拖延症。\n\n【桃花指引】单身者不要宅在家里。你容易遇到和你志趣相投的人共同的爱好和话题是打开心门的钥匙。有伴侣的可以和另一半一起参与社交共同的社交圈能让关系更紧密。那些有共同朋友圈的情侣往往比只活在二人世界里的情侣走得更长久。\n\n【避坑指南】注意不要因为在人群中受欢迎而忽视伴侣的感受。保持适当的边界感让另一半有安全感。你的受欢迎程度不应该以伴侣的不安为代价。外面的世界再精彩也不如一个真正懂你的人在你身边重要。", "career": "【工作状态】当前最重要的事不是个人业绩而是拉拢人心建立联盟。你在团队中像粘合剂能帮助不同部门建立沟通桥梁。这种能力在当前阶段比你单独完成一个项目更有价值。一个人的能力再强也只能做一件事但你能让一群人一起做事的时候价值就被放大了无数倍。\n\n【细节断语】适合牵头做跨部门协作组织团建活动。你的协调能力正在成为团队中最稀缺的资源。不要小看那些看起来跟业绩无关的工作它们正在为你的职场人脉铺路。那些你花时间建立的人际关系在未来某个时刻会给你带来巨大的回报。\n\n【避坑指南】不要单打独斗也不要当孤胆英雄。主动寻求同事帮助也乐于分享自己的资源。职场上的好人缘是你最大的护城河。那些离职后还跟你保持联系的同事才是你真正的职场资产。"}, "1,4": {"name": "天雷无妄", "classic": "<strong>天雷无妄 · 卦辞精解</strong><br><br>无妄之往顺其自然。不妄为吉。", "overall": "【现状剖析】不要瞎折腾！你最近是不是特别想做点什么改变现状？越是这种时候越要管住自己蠢蠢欲动的手。现在的节奏虽然慢但方向是对的强行加速只会出乱子。你那套破局方案在领导眼里不过是又一个不成熟的想法。不是你能力的问题而是时机未到。万物有时节该开花的时候自然会开。\n\n【体用天机】你内心虽有万千想法但付诸行动时处处受制。不是你能力的问题而是时机未到。顺应天道等待时机比盲目行动更智慧。最好的猎手永远是最有耐心的那一个。你不要做那个因为等不及而提前暴露自己的傻瓜。人生很多机会不是争取来的而是等来的。\n\n【变卦警示】最近如有投机取巧的想法务必打消。那些看起来像捷径的路往往是最远的弯路。按规矩办事才能避免意外。你现在走的每一步虽然慢但每一步都算数。那些走捷径的人最后往往会发现捷径就是最远的弯路因为他们绕过了成长必须经历的磨砺。", "wealth": "【财运趋势】财运平平甚至有小幅回撤的风险。不要投机。任何看起来像捷径的赚钱方式最终都会让你付出更大的代价。正财稳定但不会有太大起色。守好现有的钱袋子比什么都重要。这个阶段不亏就是赚稳稳当当攒钱比追求暴利安全得多。\n\n【细节断语】在考虑投资或参与朋友创业之前请先暂缓。守住现有的钱控制不必要的消费。现阶段的财运逻辑是不亏就是赚。老老实实上班稳稳当当攒钱。慢下来不是认输而是一种战略性的等待。真正的高手都懂得在该慢的时候慢下来。\n\n【避坑指南】警惕那些声称低风险高回报的投资产品。那些承诺高回报的人盯上的是你的本金而不是你的未来。那些主动来找你的赚钱机会百分之九十都是来收割你的。在这个信息爆炸的时代你需要的不是更多机会而是更好的判断力。", "love": "【感情现状】感情上不要强求。你越是紧追对方就越想逃。不管单身还是有伴侣现在都需要松一松。让感情自然发酵比刻意制造浪漫更有效。感情真的很奇怪你越是想要就越是得不到你越是放松反而越容易拥有。\n\n【桃花指引】最近如果遇到感兴趣的人先以朋友的方式相处。不要急着表白或确定关系。给彼此多一点时间了解好的感情不怕等。那些认识第一天就说要在一起的人往往连第一个月都撑不过去。真正的感情需要时间发酵慢慢来比较快。\n\n【避坑指南】有伴侣的人最近容易因为小事产生摩擦。不要小题大做也不是每件事都值得吵一架。给对方多一些自由空间你越是想控制一个人对方就越想逃。好的感情不是管出来的而是信出来的。信任才是感情里最珍贵的东西。", "career": "【工作状态】工作上别折腾。现在不是跳槽转行或推动大改革的时候。保持现状把手头工作做精做细。你可能会觉得目前的工作太单调但这种稳定其实是一个积累期。竹子在地下蛰伏了四年才破土但破土后短短六周就能长到三十米。你现在就是在扎根基的阶段。\n\n【细节断语】每一段看似无聊的时光都在为你未来的爆发积蓄能量。你现在觉得无聊的每一天都是你以后想回但回不去的安稳日子。不要因为一时无聊就做出冲动的职业决定。那些因为无聊而离职的人最后大部分都在后悔。\n\n【避坑指南】不要在冲动之下提离职或换岗位。现在的职场环境可能存在一些你不了解的暗流。安分守己是你现在最好的策略。稳住别浪这四个字在职场里是一辈子的真理。沉住气现在不是出招的时候。"}, "1,5": {"name": "天风姤", "classic": "<strong>天风姤 · 卦辞精解</strong><br><br>天地相遇品物咸章。不期而遇之象。", "overall": "【现状剖析】你的生活中即将出现一场意料之外的变数。姤卦像一阵突如其来的狂风把你现有的节奏吹得七零八落。但这场混乱里藏着上天给你的礼物——一个你完全没想到的人或机会正在朝你走来。保持开放的心态不要把任何可能性挡在门外。命运给你的惊喜往往包装成最不起眼的样子。\n\n【体用天机】天在上风在下风行天下无远弗届。你遇到的机会可能来自于意想不到的方向。这些偶然中藏着必然的机缘。请保持好奇心不要用你固有的框架去筛选机会。你越是抗拒超出认知范围的东西就越是错过了人生的彩蛋。那些改变你命运的机遇往往以最不起眼的方式出现。\n\n【变卦警示】姤卦也有女壮之意。如果你和某人的关系中能量差距太大注意保持平等的姿态。不要因为对方的强势而委屈自己也不要因为自己的优势而轻视对方。所有健康的关系都建立在能量对等的基础之上。失衡的天平注定走不长远。", "wealth": "【财运趋势】偏财运正在向你招手。最近可能会收到一笔完全没想到的钱——退款奖金或者好久不联系的人突然带来的合作机会。这笔意外之财来得快去得也快请务必在收到的第一时间先存起来而不是急着花掉。意外之财就像不期而至的客人你留不住它但可以好好招待它。\n\n【细节断语】来得快去得也快是姤卦财富的特征。突然赚到一笔钱但也会被突如其来的消费冲动花掉。抓住时机但也要学会锁定利润。见好就收不要贪心。很多人一辈子都学不会见好就收这四个字所以他们在赚钱和亏钱之间反复横跳。\n\n【避坑指南】警惕天上掉馅饼式的财富诱惑。姤卦虽然主意外之喜但也提醒你分辨哪些是真正的机会哪些是精心设计的陷阱。免费的往往是最贵的。那些主动送上门的财富往往在你还没高兴完的时候就已经悄悄溜走了。", "love": "【感情现状】这是最有名的桃花卦之一！单身的朋友极有可能在一个完全意想不到的场合遇到让你心动的人——路上咖啡厅甚至是在处理一件烦心事时。这种缘分往往带有宿命感让你觉得一切都是被安排好的。你遇到这个人的方式会成为你以后反复讲起的故事。\n\n【桃花指引】对方可能和你的背景差异很大但正是这种差异带来了强烈的吸引力。保持好奇心不要用固有标准去筛选。缘分来的时候往往长得跟你想象的不一样。你之前列的那些择偶标准在这个人面前可能会全部失效。有时候对的人跟你想象中的完全不一样。\n\n【避坑指南】有伴侣的人需要注意姤卦也代表外界诱惑。近期你身边可能出现让你眼前一亮的人。保持边界感是对自己感情的保护。不是所有的心动都需要行动。有些心动只是平淡生活里的调味剂尝过了就该放下。", "career": "【工作状态】职场上有突如其来的机遇。可能是猎头联系你被挖角或突然接到一个重要项目的邀请。姤卦的机遇往往带有窗口期错过了就是错过了。机会不会一直等你错过这一波下一波不知道要等到什么时候。\n\n【细节断语】机遇带有窗口期错过了就是没了。但同时要核实信息的真实性。不要因为机会来得突然就草率决定。在签字之前先做好背景调查。那些看起来特别完美的机会往往也藏着一些你还没发现的瑕疵。快速行动和草率决定是两回事。\n\n【避坑指南】不要因机会来得突然就草率决定。表面上的好事可能暗藏玄机。多做背景调查跟行业内的人聊聊了解清楚再做决定。行动要快但决定要稳。那些冲动做决定的人最后大部分都在后悔。"}, "1,6": {"name": "天水讼", "classic": "<strong>天水讼 · 卦辞精解</strong><br><br>天水相背而行。化讼为和退让为吉。", "overall": "【现状剖析】你最近被人触碰到了逆鳞一股火气窝在胸口怎么都散不掉。你想要争个输赢的冲动已经让你连续失眠好几天了。想一想你到底是争那口气还是为了解决问题？当你把情绪放到台面上那一刻你已经输了主动权。情绪上头的时候智商为零这个道理你比谁都懂但做起来比登天还难。\n\n【体用天机】天水相背而行双方各执一词互不相让。但争赢了道理输了人情得不偿失。讼卦的核心智慧是化讼为和。能私下和解就不要打官司能退让就不要争强好胜。诉讼没有赢家只有不同程度的输家。你的时间和精力比那口气值钱得多。\n\n【变卦警示】退一步海阔天空。暂时的忍让不是为了认输而是为了把精力放在更重要的事情上。问问自己这场争斗对你未来三个月的发展真的重要吗？三个月后回头看这件事大概率会觉得现在的自己太较真了。别让一时冲动毁了你长期积累的价值。", "wealth": "【财运趋势】最近要格外小心经济纠纷。你与人的金钱往来如果还没有白纸黑字写清楚请在本周内补上。不管是借给朋友的钱还是跟同事的合伙投资口头约定在这个阶段就是一颗定时炸弹。多少年的好关系就是因为没有写清楚而闹到老死不相往来。\n\n【细节断语】如果已经陷入财务纠纷建议私下和解而非走法律程序。打官司的成本远超你的预期。那些时间精力和金钱投入足够你重新开始一个新项目了。很多时候你花在打官司上的钱比你争的那笔钱还要多。聪明人都知道和解比诉讼划算。\n\n【避坑指南】近期不要借钱给别人也不要替人担保。除非你有心理准备这笔钱可能收不回来。所有的合作和交易都要白纸黑字写清楚。现在的慈悲心可能变成未来的闹心事。借钱的时候你是大爷收钱的时候你是孙子这个道理你早晚会懂。", "love": "【感情现状】感情上容易发生争吵而且这些争吵往往是从小事升级而来。你的语言最近容易变成武器伤害到最亲近的人。情绪上头时说出的话像泼出去的水收不回来。那些恶毒的话一旦说出口就算事后和好了也会在对方心里留下一个永久的疤。\n\n【桃花指引】单身者近期在感情中可能出现竞争关系。你和别人同时喜欢上一个人或者有人跟你争抢注意力。让事情自然发展而不是急着去竞争。有些人不是抢来的而是等来的。你越是表现得在意对方就越想逃你越是无所谓对方反而越好奇。\n\n【避坑指南】管住嘴。情绪上头时不要说出伤人的话。冷静下来再沟通效果会好很多。开口之前先数三秒钟这三秒可能挽救一段关系。很多关系破裂不是因为不爱了而是因为说错了话。那些伤人的话一旦说了就收不回来了。", "career": "【工作状态】职场上有卷入人事斗争的风险。保持中立是你最好的护身符。不要参与同事间的八卦和议论不要在公开场合评论领导或其他部门。你的专业能力才是你安身立命的根本。那些在办公室里搞小动作的人最后都没有好下场。站队一时爽但站错队火葬场。\n\n【细节断语】不要参与公司内部的是非。你的专业能力才是你安身立命的根本。如果被卷入纠纷请通过正式渠道解决保留好证据。那些想拉你站队的人只是为了增加自己的筹码他们不会在你落难的时候拉你一把。保持中立保持专业。\n\n【避坑指南】如果被卷入纠纷尽量通过正式渠道解决。保留好邮件和聊天记录等证据但不要主动挑起冲突。能私下协调就不要闹到领导那里。有些问题一旦放到了台面上就没有回旋的余地了。大事化小小事化了才是职场智慧。"}, "1,7": {"name": "天山遁", "classic": "<strong>天山遁 · 卦辞精解</strong><br><br>退隐避让与时偕行。知退者智。", "overall": "【现状剖析】现在不是往前冲的时候而是需要停下来休整。你是不是已经硬撑着太久了？那些不属于你的责任、那些你帮别人收拾的烂摊子、那些你为了讨好别人而委屈自己的事——该放下了。懂得在合适的时候后退不是懦弱而是需要大智慧。真正的强者不是从不后退的人而是知道什么时候该后退的人。\n\n【体用天机】天在上山在下你面对的局面已经有些强弩之末了。继续硬撑只会消耗更多资源。退一步不是放弃而是换个角度重新审视局面。有时候退一步你会发现原来路不只一条。你现在以为的死胡同可能只是因为你站错了角度换个位置可能就是一片开阔地。\n\n【变卦警示】如果感到身心俱疲这正是身体在告诉你需要休息了。遁卦不是失败者的选择而是智者的策略。懂得战略性撤退的人才能在下一次战役中赢得漂亮。你现在的撤退不是认输而是在为下一场战斗积蓄弹药。那些从不后退的人最后都死在了冲锋的路上。", "wealth": "【财运趋势】守财为主不宜进攻。现在不是你冒险的时候。不要做新的投资不要扩大业务不要追求高风险。现金为王这四个字就是你接下来一个月的财富密码。这个阶段还大手大脚花钱的人过不了多久就会后悔。市场上看起来诱人的机会十个里面有九个都是陷阱。\n\n【细节断语】把手上的资产做一次全面评估和优化。砍掉不赚钱的业务把不用的资产变现。手握充足的现金流比什么都重要。安全感不是来自资产规模而是来自流动性。很多人看着有钱但其实钱都被锁在各种资产里取不出来跟没钱没区别。\n\n【避坑指南】近期可能会有人向你推销难得一遇的投资机会请一律拒绝。遁卦时期的市场环境不适合冒险。守住就是胜利。这个阶段不乱花钱就是赚钱。你赚不到钱没关系但你要是把钱亏了那就真的亏了。不亏就是赚这个道理在这个阶段比任何时候都适用。", "love": "【感情现状】感情上需要冷静期。如果你感到关系有些窒息适当拉开一些距离。距离产生美这句话在遁卦时期特别适用。有时候少联系几天反而会让对方意识到你的重要性。你想一个人的时候不是因为你天天见到他而是因为你有时间想念他。距离会让感情变得更清晰。\n\n【桃花指引】单身者近期不适合主动追求。你越是靠近对方越想逃。把注意力转移到自己身上提升自己比追逐别人更有吸引力。当你变得更好的时候对的人自然会来。好的爱情不是追来的而是吸引来的。你先成为想成为的那个人对的人自然会出现。\n\n【避坑指南】有伴侣的人近期不要逼对方做决定。给彼此一些时间和空间让关系自然发展。逼得太紧只会让对方想要逃离。松弛一点关系反而会更紧密。那些整天黏在一起的情侣往往不是感情最好的那对。适度的距离是感情的保鲜剂。", "career": "【工作状态】职场上有隐退的迹象。这个隐退可能是主动的也可能是被动的。但无论如何保持冷静等看清楚了再行动。现在不是冲动做决定的时候。冲动离职的人最后大多都会后悔。在没有看清前路之前先不要急着转身。看不清的时候就站着别动。\n\n【细节断语】如果目前的工作让你感到压抑现在可能是考虑退路的时候了。但不要裸辞先找好下家再行动。蛰伏期也是积累期利用这段时间学习新技能拓展人脉。你现在的低调不是认输而是在为自己的下一段旅程做准备。默默准备的人最后都会迎来他们的高光时刻。\n\n【避坑指南】不要在情绪低落时做重大职业决定。退一步不是放弃而是为未来的前进腾出空间。现在所经历的低谷都是在为未来的爆发积蓄能量。没有谁的职场是一帆风顺的。那些看起来光鲜的人背后都有一段不为人知的蛰伏期。"}, "1,8": {"name": "天地否", "classic": "<strong>天地否 · 卦辞精解</strong><br><br>天地不交万物不通。否极则泰来。", "overall": "【现状剖析】最近是不是连呼吸都觉得不顺？感觉自己像一个在泥潭里跑步的人拼尽全力但一步都迈不出去。工作上被卡住了感情上沟通不了连身体都在抗议。天地之气不相交万物都无法生长。但否极泰来——否到了极致就会转向泰。你现在有多难受接下来就有多顺利。\n\n【体用天机】否卦蕴含着否极泰来的核心智慧。否卦到了极致就会转向泰卦。现在的困境是阶段性的不是永久性的。黎明前的黑暗总是最浓的这是天地运行的规律。你现在的痛苦是有期限的。熬过去就是另一片天。那些在黑暗中放弃了的人永远看不到天亮时的风景。\n\n【变卦警示】此时最忌硬来。天地之气都不相通你一个人再努力也是徒劳。不如低调做人减少动作等待时机转好。俭德避难——减少开支低调行事保身为上。在这个阶段活着比活得好重要。保存实力才有机会在下一次行情中翻身。那些活过冬天的人才有资格拥抱春天。", "wealth": "【财运趋势】财运低迷处于周期性低谷。收入减少支出增加投资亏损。这是正常的周期波动不必过分焦虑。财务的冬天总会过去春天一定会来。但前提是你的活过这个冬天。那些在冬天把所有种子都吃光的人到了春天也无地可种了。所以要守住你的种子。\n\n【细节断语】此时最重要的是开源节流。能省则省不要为了维持面子消费。暂停所有非必要的投资和消费尤其不要借钱投资。活下来比活得好重要。这个阶段面子一文不值。你那些朋友不会因为你花钱大方就高看你一眼。他们只会觉得你傻。\n\n【避坑指南】否卦时期的投资决策最容易出错。暂停所有非必要的投资和消费等到形势明朗再做决定。尤其不要借钱投资或加杠杆。市场不会消失但它会重新洗牌。每一次大跌之后都会有一批新人上位。你要确保自己是那批新人而不是被洗掉的那批。", "love": "【感情现状】感情上有阻隔。单身者认识新人的渠道变窄了有伴侣的沟通不畅有种说不通的挫败感。否卦时期的关系就像隔着一层雾看不清也摸不透。这种无力感让你很沮丧但你越急事情就越糟。不妨先放一放让时间来解决。有些问题急是急不来的。\n\n【桃花指引】现在不是强求缘分的时候。你越是焦虑地寻找越是找不到。把注意力收回到自己身上把这段时间当作感情的休渔期。等否卦过去春暖花开时自然会有新的可能。那些在休渔期好好修船补网的人到了出海的时候才能捕到最大的鱼。\n\n【避坑指南】有伴侣的人近期容易出现误会。如果觉得沟通困难不要逼迫对方回应。给彼此耐心和理解否卦的闭塞阶段总会过去。耐心是现在最好的策略。那些能熬过否卦时期的情侣最后都会变得更加珍惜彼此。经历过冬天的人在春天来临时会格外感恩。", "career": "【工作状态】工作上进展不顺。项目推进慢沟通有障碍审批流程繁琐。你现在就像一部被按了慢放键的电影。职场环境让你压抑但不要因此冲动离职。因为你不确定外面是不是也一样压抑。现在的整体大环境都不好换家公司可能只是换了个地方受气。\n\n【细节断语】现在的职场困境是普遍存在的不是只有你一个人受苦。保持耐心做好分内的事。不要把气撒在同事身上他们也是受害者。那些整天抱怨的人最后都被淘汰了而那些默默做事的人最后都等到了风来。风来了那些准备好的人才能飞起来。\n\n【避坑指南】不要在这阶段推动改革或创新。你的建议可能不会被采纳反而让你成为众矢之的。安分守己低调做事等否卦过去后再展现你的能力。真正聪明的人都知道在该低调的时候低调。你不是在逃避你是在等待属于自己的时机。"}, "2,1": {"name": "泽天夬", "classic": "<strong>泽天夬 · 卦辞精解</strong><br><br>夬者决也当断则断。果断裁决之象。", "overall": "【现状剖析】你不能再拖了。泽天夬卦就像大坝决堤一样告诉你——那个你拖了三个月都不敢做的决定今天必须给出答案。你心里早就知道正确答案是什么你拖延只是因为害怕面对结果。但拖下去只会让损失扩大。不管是分手还是辞职这个决定你跑不掉的。你躲得过初一躲不过十五。\n\n【体用天机】泽在天上堤防溃决之象。你积压已久的情绪和问题已经到了不得不面对的时候。就像一壶烧开的水盖子再也压不住蒸汽了。与其被动等到事情崩盘不如主动去面对去解决。有些决定你做的时候很痛但不做的代价更大。长痛不如短痛。\n\n【变卦警示】决断之后不要反复纠结。你已经做出了选择就不要回头看了。覆水难收这个词用来形容夬卦再合适不过。既然做出了决定就坚定地走下去。不要在做完决定之后又开始想如果当初选了另一个会怎样。最消耗人的不是做出错误的选择而是做出选择之后反复怀疑自己。", "wealth": "【财运趋势】你的财务状况正处在一个关键的决断点。手里那笔一直犹豫要不要卖掉的资产本周之内必须做出决定。拖延不会让行情变好只会让你错过最后的出手窗口。相信你的第一判断然后果断行动。在投资里犹豫不决比做出错误判断更致命。那些犹犹豫豫的人最后往往什么都得不到。\n\n【细节断语】有一些长期亏损的投资或业务需要你下定决心处理掉。断舍离不仅适用于生活也适用于财务。那些你已经知道没希望的投资不要再抱有幻想。很多人亏钱不是因为不会买而是因为不会卖。会买的是徒弟会卖的才是师傅。持股容易割肉难但该割的时候就得割。\n\n【避坑指南】近期在金钱往来上要注意快刀斩乱麻。如果有人欠你的钱迟迟不还本周是催收的最佳时机。过了这个村就没这个店了。有些账拖着拖着就变成了死账。你不好意思开口要钱的时候对方正在心安理得地花着你的钱。该开口的时候一定要开口。", "love": "【感情现状】感情里你不能再含糊其辞了。那个一直跟你暧昧不清的关系已经到了必须摊牌的阶段——要么正式在一起要么干脆断掉。这种半死不活的状态对两个人都是消耗。你耗着对方也耗着自己。暧昧虽然美好但它是有保质期的过了那个期限就变成了折磨。\n\n【桃花指引】如果你已经确定某段关系没有未来请果断放手。拖得越久伤害越大。不忍心说分手的人最后往往会用最伤人的方式结束。那些你舍不得斩断的关系最后都会以你意想不到的方式结束而且那个方式往往比你主动分手要痛苦得多。所以长痛不如短痛。\n\n【避坑指南】有伴侣的人近期注意不要因为一时冲动做出分手的决定。夬卦说的是当断则断但前提是你已经深思熟虑过。不要在做决定之前喝醉了也不要半夜做决定。冲动的决定往往会在第二天早上让你追悔莫及。冷静是决策的前提。", "career": "【工作状态】职场上面临着重要的十字路口。你面前有两个选择——要么在大公司继续熬资历等升职要么跳槽去小公司搏一把。不管选哪个都是对的但站在路口不动才是最错的。人生最怕的不是选错而是不选。你站在那里不动的时候别人已经走出去很远了。\n\n【细节断语】机会的窗口期正在关闭。如果你收到了offer或者有晋升的机会请在本周内做出决定。一个好机会在你犹豫的时候已经变成了别人的机会。职场上的机会从来不会等人你犹豫一天别人可能已经签了合同。机会不等人这是职场上最铁的定律。\n\n【避坑指南】不要因为害怕选错而什么都不选。最差的选择也比没有选择强。选错了至少知道自己错在哪里下次不会再犯。但你不选你连犯错的机会都没有。人生最大的遗憾不是我选错了而是我本可以。"}, "2,2": {"name": "兑为泽", "classic": "<strong>兑为泽 · 卦辞精解</strong><br><br>兑者说也悦也。喜悦沟通明心见性。", "overall": "【现状剖析】你这段时间整个人就像泡在温泉里一样舒服惬意。兑为泽双泽相连喜气洋洋你跟任何人都能聊得很愉快就连平时跟你合不来的那位同事今天都主动跟你打了招呼。这种顺畅的人缘是你过去半年积攒人品的集中回报。请趁着这波好人缘去推动那些你之前一直开不了口的事情。\n\n【体用天机】双泽相连相得益彰。你现在的能量场让人感到舒适和信任。别人愿意跟你分享秘密也愿意给你机会。这种状态适合谈判和解和建立新合作。你开口说话的时候别人不仅听进去了还会自动给你加分。这种气场不是什么时候都有的所以要好好珍惜利用。\n\n【变卦警示】但兑卦也提醒你不要为了讨好别人而失去自我。喜悦的沟通是双向的。单方面的迎合只会让你越来越累同时也会让别人觉得你没有原则。做一个让人开心的人很好但做一个有原则又让人开心的人更好。你的善良需要带着锋芒。", "wealth": "【财运趋势】正财运因为你的好人缘而变得特别好。如果你是销售讲师咨询师或者任何需要表达的职业最近你的业绩好得让自己都吃惊。随便打几个电话就能敲定合作。这就是你平时积累的口碑和人脉在集中变现。你以前帮过的人现在都在用他们的方式回报你。\n\n【细节断语】但因为人缘好也会带来非必要的社交开销。你最近参加的饭局变多了随的份子钱也变多了。请在这些面子消费面前保持清醒。该花的钱要花但该省的钱也要省。那些因为面子而花的钱最后往往会变成你的负担尤其是当你冷静下来看到账单的时候。\n\n【避坑指南】不要因为面子而消费也不要在开心的时候冲动购物。兑卦时期最容易被情绪驱动消费。等你回到家冷静下来看到账单的时候就后悔了。那些在情绪高涨时买的单大部分都是不必要的。控制情绪化消费是这个阶段最重要的理财功课。", "love": "【感情现状】你现在的魅力正处于巅峰期。单身的朋友你走在路上都有人跟你搭讪参加聚会你总是话题的焦点。这种吸引力不是因为你穿得多好看而是你整个人由内而外散发出的松弛感和快乐在感染别人。这种魅力比任何化妆品都管用因为它来自你的内心。\n\n【桃花指引】你这种愉快的气场会自然吸引到对的人。对方会被你的笑声感染会被你的乐观吸引。放松做你自己就是最好的求爱策略。那些为了吸引别人而刻意做出的姿态和表情在真正有魅力的人面前显得特别做作。做自己就是最好的吸引力法则。\n\n【避坑指南】有伴侣的人你们的关系最近会特别和谐甜蜜。这种和谐的时期值得好好珍惜但也需要注意不要因为太开心而忽视了那些实质性的问题。趁这段时间气氛好适合解决一些之前解决不了的矛盾。在快乐的时候谈严肃的事情往往效果更好因为对方的心情也会比较好。", "career": "【工作状态】职场上最近是你的人际关系红利期。跟同事之间的配合前所未有的顺畅就连平时跟你不对付的跨部门同事今天都主动帮你说好话。适合推进需要多方协作的大项目。那些以前推进不下去的事情现在可以拿出来重新谈了。因为你的好气场让大家愿意配合你。\n\n【细节断语】适合谈判和签约。客户会被你的真诚和专业打动。现在你谈合作的成功率比平时高很多。因为你的气场在发射一种让人无法拒绝的信号。那些犹豫不决的客户也会因为你让人舒服的沟通方式而下定决心。你的好情绪是会传染的。\n\n【避坑指南】不要因为人缘好就过度承诺。量力而行不要因为不好意思拒绝别人而接下超出能力范围的任务。有些关系你现在不忍心拒绝以后就得忍心收拾烂摊子。保护好自己的边界感。做一个好人但不做一个老好人。这中间的差别决定了你职场的未来。"}, "2,3": {"name": "泽火革", "classic": "<strong>泽火革 · 卦辞精解</strong><br><br>泽中有火革故鼎新。变革之时机已到。", "overall": "【现状剖析】你正在经历一场不破不立的转型期。泽火革水火相激你现有的生活模式已经走到了尽头。你那份早就不想干的工作、那段让你疲惫的关系、那个你待腻了的城市——它们都在用各种方式告诉你该改变了。主动求变的人会被浪潮推向高峰被动等待的人只会被拍死在沙滩上。\n\n【体用天机】水火相激变革之象。你现有的模式已经无法持续了你很清楚这一点但改变需要勇气。革卦告诉你不是你想不想变的问题而是你不得不变。变革的阵痛是暂时的但不变的痛苦是长期的。是被动地被时代抛弃还是主动地拥抱变化选择权在你手里。\n\n【变卦警示】变革中要注意方式方法。不要为了改变而改变。每一次改变都应该有明确的方向和目标。而且改变需要循序渐进不能一蹴而就。说我要改变生活但具体怎么改从哪里改你得有一个清晰的路线图。没有方向的变革只是一种变相的逃避。你逃得了一时逃不了一世。", "wealth": "【财运趋势】旧的赚钱模式已经不管用了。你之前那套稳定的收入来源正在崩塌。与其死死拽着不放不如主动去寻找新的方向。换工作换行业换一种赚钱的思维——革卦告诉你不变不行。这个时代已经不是那个一份工作做到老的年代了。你现在的稳定随时可能被打破。\n\n【细节断语】新的收入渠道正在向你招手但需要你主动去学习和适应。革卦时期的财运不会主动送上门来。你要主动去探索新的领域学习新的技能。那些你不愿意学的新东西可能就是未来别人赚钱但你赚不到的原因。时代抛弃你的时候连声招呼都不会打。\n\n【避坑指南】在转型期间要控制好现金流。从旧模式到新模式的过渡期是最危险的。预留至少三个月的生活费作为转型期的保障。不要在你最需要钱的时候发现自己一分钱都没有。很多好的转型不是毁在没有机会而是毁在了资金链断裂。现金流是转型期的生命线。", "love": "【感情现状】你正处在感情的转折点上。要么更进一步要么彻底结束。那种不上不下的状态已经维持不下去了。如果你们之间的矛盾已经到了不可调和的地步请勇敢面对。有时候结束一段不健康的关系恰恰是迎接新生活的开始。你只有腾空一个杯子才能装进新水。\n\n【桃花指引】革卦也代表你可能会遇到一个完全不同于以前类型的对象。如果你愿意放下固有偏好尝试新的可能性你会发现原来世界这么大。你之前的感情一直不顺可能是因为你一直在同一类人身上反复栽跟头。换一个类型试试风景可能完全不同。\n\n【避坑指南】变革时期感情上容易出现波动。请不要在关系剧烈变化的时候做出重大决定。给自己和对方一个冷静期。那些在情绪最激动时做的决定往往不是最好的决定。革卦的核心是主动求变但不是冲动求变。冷静地变革和冲动地革命是两回事。", "career": "【工作状态】你的公司或团队可能正在经历大地震。组织架构要调整领导要换人业务方向要转型。你在这场变革中最好的策略是主动适应保持中立不断提升自己的不可替代性。那些在变革中抱怨的人往往第一个被裁掉而那些主动适应的人往往能借势而上。\n\n【细节断语】变革中机会与风险并存。那些以前轮不到你的机会现在可能会落在你头上。但前提是你得准备好。准备包括你的技能和心态都得跟上。平时多学一点东西关键时刻真的能救命。那些在变革中脱颖而出的人都是平时就做好准备的人。\n\n【避坑指南】不要在变革中急着站队。在组织调整期间最安全的策略就是做好自己的事。谁是最后的赢家现在说不好过早站队只会让你成为第一个牺牲品。保持自己的能力保持自己的价值。你有价值的时候制度会为你让路你没价值的时候制度就是来淘汰你的。"}, "2,4": {"name": "泽雷随", "classic": "<strong>泽雷随 · 卦辞精解</strong><br><br>随时之义大矣哉。顺时而动不可逆势。", "overall": "【现状剖析】你现在最好的策略就是顺势而为别跟大环境对着干。你身边那个最近一直在给你建议的前辈或朋友他们说的话你最好认真听一听。你不需要自己摸着石头过河跟着有经验的人走会让你省去至少半年的试错成本。年轻人最大的问题不是能力不够而是不愿意听劝。\n\n【体用天机】随卦的核心智慧是顺时而动。那些在风中摇摆的柳树从来没有被吹断过但那些僵硬的树干却经常被折断。你现在需要的不是刚强而是柔韧。顺应大势不代表你没有主见而是在正确的时机做正确的事。你现在的坚持如果是逆势而为那就不叫坚持叫固执。\n\n【变卦警示】随从但不盲从。在跟随的过程中保持自己的判断力。不要因为别人说好你就觉得好不要因为别人说不行你就放弃。你在跟随中要学会分辨哪些是值得跟的人哪些是把你往坑里带的人。选择比你优秀的人跟随但同时也要有自己的独立思考。", "wealth": "【财运趋势】跟对人比你做对事更重要。最近财运的关键不在你有多努力而在于你能不能找到一个靠谱的平台或导师。主动去靠近那些比你优秀的人。哪怕现在只是在旁边看着学着未来这些积累都会变成你的财富。跟对人就是给自己的人生装了一个加速器。\n\n【细节断语】适合跟有经验的人一起投资项目。不要自己单干找一个信得过的前辈带你。他们会告诉你哪些坑不能踩哪些机会值得把握。在这个阶段花钱买经验比花钱买教训划算得多。经验是你付了学费学到了东西教训是你付了学费只留下了痛苦。\n\n【避坑指南】但随卦也提醒你不要盲目跟风。别人赚钱的项目你不一定适合。天上不会掉馅饼只会掉陷阱。在跟投之前一定要搞清楚项目的底层逻辑。就算是你最信任的人推荐的产品也要自己了解清楚再说。别人的机会不一定适合你。", "love": "【感情现状】缘分这件事强求不来。你越是刻意去找就越找不到当你把注意力放在提升自己而不是寻找伴侣上时那个对的人反而会不期而至。最近请多参加你感兴趣的社交活动。那些在兴趣中认识的人往往比在相亲中认识的更合得来因为你们有共同的话题。\n\n【桃花指引】随卦在感情中的智慧是顺其自然。不要急着推进关系。让感情跟随它自然的节奏发展。好的感情就像好的茶不是一下子泡出来的而是慢慢泡出来的。那些进展特别快的感情往往结束得也特别快。慢慢来比较快这个道理在感情里尤其适用。\n\n【避坑指南】有伴侣的人近期适合跟随对方的节奏。不要总是按照自己的方式来要求对方。试着去适应对方的生活方式和沟通习惯你会发现关系变得轻松很多。感情里最舒服的状态不是我改变了你而是我们都愿意为了彼此做一些微调。磨合不是谁赢谁输而是找到两个人都舒服的中间点。", "career": "【工作状态】现在不是你当领导的时候是好好学习的时候。找到一个行业里的前辈或者一个好的平台认认真真跟着干一两年。在跟随中学习他们的思维方式和行业经验这些比你多发的那几千块奖金重要得多。你跟着学到的思维方式会在未来持续为你创造价值。\n\n【细节断语】跟随是一门艺术。你要学会在跟随中找到自己的位置。既不要过于抢眼让自己成为众矢之的也不要过于低调让人注意不到你的价值。在领导面前适度表现但在同事面前保持谦逊。这个平衡点决定了你能在这个平台上走多远。\n\n【避坑指南】选择跟随的对象比努力本身更重要。跟对了一个好的领导和平台你可以少走五年弯路。但跟错了一个差的领导可能会让你对整条职业路径产生怀疑。所以在选择跟随之前请先擦亮眼睛。选对了人你就已经赢在了起跑线上。"}, "2,5": {"name": "泽风大过", "classic": "<strong>泽风大过 · 卦辞精解</strong><br><br>泽灭木大过之象。非常之时用非常之法。", "overall": "【现状剖析】你现在正处在一个让你快要崩溃的非常时期。大过卦像一艘被大水淹没的小船——你最近是不是感觉所有的事都在同时出问题？工作上的巨量加班家中突如其来的变故还有你那已经开始抗议的身体。你已经到了极限的边缘。请你立刻停下来。那些所谓的再撑一撑就好了只是骗自己的谎言。\n\n【体用天机】泽水淹没木舟岌岌可危。你现在承受的压力已经超过了正常范围。这不是你不够强而是所有人遇到大过卦都会感受到这种压力。非常时期要用非常手段——那些平时你觉得不合理的方式现在可能是救命的稻草。不要用常规思维来应对非常规的困境。\n\n【变卦警示】大过之象意味着你正在经历一次极端的人生考验。但考验的另一面是蜕变。那些在这种极端压力下依然保持冷静的人会在这次考验中获得巨大的成长。等到风暴过去之后你会发现自己的抗压能力和解决问题的能力都上了一个大台阶。竹子被风吹弯了但它不会断因为它有韧性。", "wealth": "【财运趋势】你最近的财务状况非常危险。近期可能出现一笔大额支出——车坏了要修家里有急事需要用钱或者某种完全没想到的开销突然出现。这笔大额支出会直接掏空你本就不多的积蓄。请提前做好应急准备。在任何时候手边都要有一笔可以随时动用的应急资金这是生存的基本常识。\n\n【细节断语】在非常时期要学会非常之财。那些平时你觉得不靠谱的赚钱方式现在可能值得一试。不过要守住底线不要为了钱做出违背原则的事。非常时期需要非常手段但不代表你可以不择手段。穷和违法之间有一条线你无论如何都不能跨过去。\n\n【避坑指南】不要在这个阶段借高利贷或参加任何高风险的投资。大过卦时期你已经承受了足够的压力不要再用财务上的错误决策给自己增加更多负担。稳一点慢一点活着比什么都重要。借钱一时爽还钱火葬场的道理在非常时期尤其适用。守住底线别让自己陷入更深的困境。", "love": "【感情现状】感情上你在走极端。要么把所有情绪都挂在脸上一点就炸要么把自己关在壳里谁也不理。你的伴侣最近应该感到非常无助因为他们根本不知道该怎么跟你相处。请试着平心静气地告诉对方你现在的真实状态。真正的亲密关系不是你好我好的时候才存在的而是在你脆弱的时候对方依然愿意陪在你身边。\n\n【桃花指引】如果你单身大过卦也暗示你可能会遇到一段非常规的恋情——年龄差很大的异地恋或者你从来没想过的类型。不要急着用自己的标准去判断对错。感情有时候就是那么不讲道理。那些最合适的往往不是最符合你标准的而是最让你出乎意料的。\n\n【避坑指南】在大过卦的压力之下你很容易对感情做出极端的判断。不要在不冷静的时候说分手也不要在极度孤独的时候随便开始一段关系。那些在情绪低谷时做的感情决定百分之九十都会让你后悔。给自己一个情绪稳定期。先处理好自己的情绪再处理感情的问题。", "career": "【工作状态】你目前在职场上已经被严重超载了。你的工作量至少是正常人的两倍你的直属上司还在不断地往你桌上加任务。你需要主动去跟领导沟通你现在的负荷状态而不是一个人硬扛到身体垮掉的那一天。那些不喊累的人最后往往累倒了也没有人知道。会哭的孩子有奶吃不是没有道理的。\n\n【细节断语】你的职场环境或企业正在经历一场大变革。大过卦时期你可能会面临裁员业务调整或组织架构变动。在这种动荡中保持冷静做好自己的事同时准备好B计划。不要把全部希望寄托在一家公司上这个时代没有任何一家公司能给你铁饭碗。真正的铁饭碗是你的能力。\n\n【避坑指南】非常时期你需要表现出非常的能力。那些平时没人愿意做的苦活累活现在正是你展现价值的时候。在大过卦的极端压力下那些能顶住压力解决问题的人会得到最大的回报。危机危机危中有机就看你能不能抓住。你顶住了就是你的机会你顶不住就是别人的机会。"}, "2,6": {"name": "泽水困", "classic": "<strong>泽水困 · 卦辞精解</strong><br><br>困而不失其所亨。坚守则终有出头之日。", "overall": "【现状剖析】你现在就像一个困在沼泽里的人越挣扎陷得越深。你正在经历一场全方位的困境——财务吃紧工作不顺感情也亮起了红灯。你每天晚上躺在床上的时候都在想同一个问题：我到底是怎么把自己逼到这个地步的？困卦告诉你答案：你不是能力不够你只是卡在了人生周期的最低谷。这时候最忌讳的就是病急乱投医。\n\n【体用天机】泽中无水库竭水涸。这种困境就像鱼被困在干涸的水坑里。但你需要的不是绝望而是智慧。困卦告诉你坚守的力量。你现在要做的不是拼命挣扎而是保持体力等待下一次涨潮。困境是暂时的但你的韧性和耐心会让你度过这段最难熬的时光。\n\n【变卦警示】困卦的爻辞说困而不失其所亨。意思是在困境中保持你的原则和节奏你就还有希望。很多人在困卦时期最大的问题不是因为环境太差了而是因为心态崩了。只要你心态不崩任何事情都有转机。心态一崩你就真的输了。人活着就是一个心态。", "wealth": "【财运趋势】你的财务状况正在经历一场寒流。收入在减少支出却在增加你的银行卡余额已经让你不敢点开看了。但困卦有一个好消息——财务困境是周期性的。只要你从现在开始严格节流每一分钱都花在刀刃上最多两个月你就能撑过去。大多数人的财务困境不是收入的问题而是支出的问题。\n\n【细节断语】近期不要做任何大的财务决策。你现在的判断力被焦虑影响了。你现在的状态做出的投资决策大概率会是错的。在你不冷静的时候最好的财务决策就是不做任何财务决策。那些在焦虑中做出的投资决定往往会加剧你的焦虑而不是解决你的问题。\n\n【避坑指南】但如果有人在这个时候愿意帮你请不要拒绝。困卦时期最需要的就是借助外力度过难关。接受别人的帮助不是丢脸的事情。那些在困难时期帮过你的人以后你要加倍还回去。但至少现在你得先活下来。面子在生存面前一文不值。活下去才有翻盘的机会。", "love": "【感情现状】你在这段感情里已经感受不到快乐了剩下的只有压抑和窒息。单身的朋友你最近陷入了一段没有结果的暧昧关系动弹不得明知道对方不是对的人但就是不甘心放手。困卦告诉你的建议是先冷处理一段时间你现在的判断力是完全失灵的状态。有些关系需要时间和距离才能看清。\n\n【桃花指引】困卦时期的感情建议是先处理好自己的问题再去考虑感情。你现在的状态就像一个漏水的船你自己都快沉了还要去拉别人上船吗？当你自己都处于困境之中的时候不适合开始新的感情。先把自己修好了再去找另一块拼图。先自救再救人。\n\n【避坑指南】现在的困境是对你们感情的一次重大考验。如果你们能一起熬过去你们的关系会变得更加牢固。但如果对方选择了离开请不要怨恨。每个人都有选择的权利。那些在困境中离开你的人不值得你挽留那些在困境中留下来的人值得你用一生去珍惜。", "career": "【工作状态】你的职业生涯正处在最黑暗的低谷期。项目推进不了升职无望每天上班都像是在上刑场。这种时候你最容易犯的错误就是冲动辞职。请不要这么做。现在的就业市场比你想象的更残酷。骑驴找马是唯一正确的策略。那些冲动裸辞的人最后大部分都在家里躺了三个月以上才找到下家。\n\n【细节断语】在困卦时期职场上最重要的是低调积累而不是高调表现。利用这段时间学习新知识提升自己的市场竞争力。这是你在当前环境下能做出的最好的投资。别人在被困境消耗的时候你在积蓄力量等到风来了你就是那个飞得最高的人。\n\n【避坑指南】不要因为暂时的困难而否定自己的能力。你之所以被困不是因为能力不足而是因为环境和时运。时运不好的时候能力再强也无用武之地。等到时机到了你积累的能力和资源会一次性爆发出来。耐心等待主动准备。机会永远留给那些准备好了的人。"}, "2,7": {"name": "泽山咸", "classic": "<strong>泽山咸 · 卦辞精解</strong><br><br>山上有泽咸感通也。心心相印之兆。", "overall": "【现状剖析】你现在有一种惊人的读心术能力。泽山咸卦山上有泽气息相通你对人的直觉准得可怕——对方还没开口你就知道他要说什么别人心里的小九九你一眼就能看穿。这种超强的感应力让你在谈判和社交中占尽先机。但过强的感知力也会让你接收太多负能量请学会给自己设一道心理防线。\n\n【体用天机】山上有泽气息相通。你现在的能量场正在自然地与周围的人和事产生连接。那些一直想不通的事情突然明白了那些一直找不到的答案也浮出了水面。因为你的内心安静下来了你才能听到真正的声音。人在焦虑的时候耳朵是堵着眼睛是闭着的。\n\n【变卦警示】你的感应能力特别强但也容易受到外界情绪的干扰。今天要学的是如何在感受别人的同时保护好自己的能量场。不是每个求助你都需要回应不是每个情绪你都需要承接。你的善良需要带着锋芒。共情能力太强的人往往活得最累。", "wealth": "【财运趋势】财运正在跟你的社交圈产生强烈的化学反应。最近认识的新朋友参加的聚会甚至随手回复的一条朋友圈都可能成为意想不到的财富机会。咸卦时期的财富密码是连接——你认识的人越多你的财富网络就越密。你的社交圈就是你的财富圈。\n\n【细节断语】因为感应力强你也更容易遇到贵人。对方会莫名其妙地信任你愿意给你机会和资源。请珍惜这些贵人运但不要过度依赖。贵人是帮你开门的人但路得你自己走。没有人能替你走完你的人生路。贵人给你机会但抓不抓得住看你自己的本事。\n\n【避坑指南】在财富机会面前保持你的真诚。咸卦最忌讳的就是利用别人的信任谋取私利。一旦你失去了真诚你的感应力也会随之消失。你的好人缘是你的财富放大器但也是你的信誉账本。存进去的每一次真诚都会在未来的某一天连本带利地回到你手里。", "love": "【感情现状】这是最强的桃花卦没有之一。单身的朋友你最近脱单的概率高到了一个恐怖的程度。你可能会非常自然地跟某个人产生一种说不清的默契——第一次聊天就像认识了很久对方想的跟你说的完全一样。这种灵魂层面的共振不是什么时候都能遇到的。当你遇到这样的人请务必抓住。\n\n【桃花指引】你最近遇到的这个人可能跟你有一种说不清的熟悉感。你会觉得好像在哪儿见过但明明今天是第一次见面。这种神秘的连接感就是咸卦在感情中最典型的体现。你们的相遇不是偶然而是必然的。冥冥中有一股力量在把你们推向彼此。这种宿命感很难得。\n\n【避坑指南】有伴侣的人你们之间会重新找回初恋般的心动感。那些被柴米油盐磨掉的激情又会重新燃起来。请趁着这段美好的时期做一些你们以前经常做但现在已经很久没做的事——约会旅行甚至只是手牵手散步。感情需要回忆来滋养没有回忆的感情就像没有水的鱼。", "career": "【工作状态】你在工作中的配合能力已经达到了一个巅峰状态。你跟同事之间的配合天衣无缝根本不需要多余的沟通就能把事情做得漂亮。适合谈判签约和推进需要高度默契的新项目。你现在的状态做一个人的事只会浪费你的能力。把你放在需要协作的岗位上你的价值会最大化。\n\n【细节断语】你现在的状态下做一个人的事只会浪费你的能力。请把你放在需要协作的岗位上你的价值会得到最大化的发挥。那些需要团队配合的项目你会发现自己做起来特别顺手。因为你能感知到每个人的状态和需求这种能力在协作中是无价的。\n\n【避坑指南】但也要注意不要因为过度投入而失去了自己的边界。配合别人不等于失去自我。在工作中保持良好的合作态度但也要保护好自己的利益和时间。一个好合作的人和一个好欺负的人是两回事。别让你的配合变成别人眼中的理所当然。"}, "2,8": {"name": "泽地萃", "classic": "<strong>泽地萃 · 卦辞精解</strong><br><br>萃者聚也英才荟萃。人气汇聚之吉兆。", "overall": "【现状剖析】你正在成为人群中的磁场中心。泽地萃卦像水流汇入大地——你正在吸引身边的人向你靠拢。你最近在社交圈子里的存在感明显增强了大家都愿意跟你聊天约你出去听取你的意见。这种人气是赚不来的是你过去那段沉默期的积累终于开始发光了。那些曾经默默沉淀的日子没有白费它们正在以人气和机会的方式回报你。\n\n【体用天机】萃卦的核心是聚集。你现在的位置就像是一个中心点所有的人和资源都在向你汇聚。这不是偶然的是你长期积累的口碑和人品在兑现。你过去种下的每一颗善意的种子现在都在开花结果。请珍惜这份来之不易的号召力用它去做一些有意义的事情。\n\n【变卦警示】但萃卦也提醒你人气越旺责任越大。那些向你靠拢的人是因为信任你你的每一个决定都会影响到他们。请对你的影响力负责。不要滥用别人对你的信任也不要辜负那些把你当作中心的人。影响力是一把双刃剑你可以用它来成就别人也可以用它来消耗别人。", "wealth": "【财运趋势】众筹式财运正在向你招手。最近赚钱的关键词是大家一起——合伙做生意组团做项目甚至是一起拼单囤货都能省下不少钱。萃卦告诉你一个人吃独食的时代已经过去了共享利益才能撬动更大的资源。那些越做越大的生意没有一个是单打独斗做出来的。\n\n【细节断语】你的人脉网络正在给你带来实质性的财富回报。那些你以前帮过的朋友同事甚至只是点头之交的关系现在都可能变成你的客户或合作伙伴。但也要注意在利益分配上保持公平。吃独食的人最后都会饿死那些愿意分钱的人最后都越赚越多。有钱大家一起赚。\n\n【避坑指南】萃卦时期的聚会和社交活动比较多注意控制社交支出。虽然人脉很重要但也要量力而行。那些真正有价值的人脉不是靠请客吃饭建立起来的而是靠你的价值和真诚吸引来的。高质量的社交从来不需要高消费。有价值的社交一顿饭就够了。", "love": "【感情现状】你的桃花运最近会通过群体活动出现。请多参加聚会团建和社群活动因为你只有在人群中才会自然地展现出最有魅力的那一面。你最近容易在熟人圈子里擦出火花——那个你认识很久但一直没往那方面想的人最近可能会让你突然心动。缘分往往就在你身边。\n\n【桃花指引】群体活动是你最近的桃花福地。你在团体中展现出的领导力幽默感和责任心会吸引到欣赏你的人。你在人群中闪闪发光的时候就是你最有魅力的时候。不要一个人待着了走出去让别人看到你。你的魅力需要观众。\n\n【避坑指南】有伴侣的人你们适合一起参加社交活动。在群体中你们会重新发现彼此的魅力和价值。看到对方在社交场合中受欢迎的样子会让你重新燃起对这段关系的热情。那些整天宅在家里的情侣最后都会变成室友。社交是感情的润滑剂。", "career": "【工作状态】你在职场中正在成为一个团队的核心。大家都愿意跟着你干听你的安排。这种影响力和号召力来之不易请珍惜并合理使用。适合做组织协调和跨部门沟通的工作。那些需要凝聚人心的任务交给你就对了。你是天然的组织者和协调者。\n\n【细节断语】你的领导力正在被更多人看到。这个时候你适合承担更多的管理职责。不要害怕当领导不要害怕承担责任。那些不敢当领导的人不是因为他们能力不够而是因为他们害怕被批评。但被批评是成长的一部分。你不下水永远学不会游泳。\n\n【避坑指南】不要因为受欢迎就骄傲自满。人气是流动的今天的焦点可能明天就变成了路人。保持谦逊和感恩的心态对待每一个信任你的人。那些在得意时依然保持谦逊的人在失意时也不会孤单。人气靠不住但人品靠得住。保持你的谦逊。"}, "3,1": {"name": "火天大有", "classic": "<strong>火天大有 · 卦辞精解</strong><br><br>火在天上大获所有。大吉之兆。", "overall": "【现状剖析】你的人生正在经历一场大丰收。火天大有卦火在天上光照大地你过去所有的努力都在这个时刻集中兑现。你可能会收到期待已久的晋升通知一个梦寐以求的机会或者一笔让你惊喜的财富。这是你应得的你熬过了那些没人知道的深夜扛住了那些差点压垮你的压力现在到了你站在台上接受掌声的时候。丰收的季节到了别忘了感谢那个在播种时没有放弃的自己。\n\n【体用天机】火在天上光明照耀无所不有。你现在正处于全方位的丰收期。财富机会人际关系个人成长都在集中爆发。这种一个领域的成功会带动其他领域跟着变好。因为你的能量场已经不一样了，你散发出的自信和喜悦会吸引更多的美好事物来到你身边。要趁热打铁把自己推到更高的位置上去。\n\n【变卦警示】大有卦也提醒你物极必反盛极必衰。你现在拥有的越多越要保持清醒。财富和名声来了之后最考验的是你能否守住初心。不要因为成功了就变得目中无人也不要因为有钱了就开始挥霍无度。有而不骄有而不奢这八个字是你接下来最重要的功课。", "wealth": "【财运趋势】你的财运已经爆表了。正财偏财一起涌入你的口袋——投资回报副业收入甚至随手买的彩票都可能中奖。钱在追着你跑而不是你在追着钱跑。这感觉确实很爽但你要知道这种运势不会永远持续。在大有卦时期你最需要做的不是赚更多的钱而是学会守住这些钱。因为很多人有钱之后就飘了最后又回到了原点。\n\n【细节断语】你现在的财富增长速度可能让你自己都觉得不真实。但这不是幻觉是你的福报在兑现。不过财富也是有灵性的它会流向那些懂得尊重它的人。不要因为赚到了就大手大脚也不要把所有的钱都投到一个项目里。分散管理分批锁定利润。会赚钱是本事会守钱是智慧。\n\n【避坑指南】大有卦的财富陷阱是过度自信。你现在做什么都赚钱这会让你产生一种错觉——以为自己的投资能力真的很强。其实是大环境的气运在帮你。等到潮水退了你才能看到谁在裸泳。趁现在运势好把赚到的钱锁定一部分变成不可动的资产。这是对你未来最大的保护。", "love": "【感情现状】你现在处于人生中吸引力最强的阶段。单身的朋友你遇到的对象质量明显比以前高了不止一个档次。因为你自己的状态变好了你吸引来的人自然也不一样。这就是同频共振的道理。你是什么样的人你就会吸引什么样的人。你现在是最好的自己所以你值得遇到最好的人。\n\n【桃花指引】你这种由内而外散发的自信和成功者的气质会自动吸引那些同样优秀的人靠近你。不用刻意去追求什么也不用刻意去表现什么。做好你自己你的光自然会吸引到那个对的人。这就像花开的时候蝴蝶自然会来不用你去追。你现在就是那朵盛开的花。\n\n【避坑指南】有伴侣的人你们的关系会在你成功的喜悦中得到升华。另一半看你的眼神里重新燃起了刚在一起时的光。但也要注意不要因为工作太忙而忽略了对方的感受。成功值得庆祝但庆祝的时候别忘了带着你身边的人。那些在你成功之前就陪着你的人才最值得你珍惜。", "career": "【工作状态】你的职场生涯正在迎来最高光的时刻。你的努力终于被高层看到了升职加薪的喜讯已经在路上。你现在在公司里的地位和话语权正在快速上升。但请记住不要因为一时的成功就觉得自己的翅膀硬了可以飞了。保持谦逊继续努力。职场上的竞争永远不会停止你停下脚步的时候别人正在加速超越你。\n\n【细节断语】你的价值正在被市场和行业认可。那些以前看不起你的人现在开始主动跟你套近乎。但请保持清醒。那些在你失意时离开你的人在你有价值时会回来的。但你要不要重新接受他们取决于你自己。以德报怨是格局但以直报怨也是你的权利。\n\n【避坑指南】成功的果实最甜但也最容易让人迷失。你现在要做的就是保持住现在的状态继续提升自己的核心竞争力。你的不可替代性决定了你能在这个位置上待多久。不断学习不断进步让自己成为一个别人无法替代的人。这是你对自己最负责任的投资。"}, "3,2": {"name": "火泽睽", "classic": "<strong>火泽睽 · 卦辞精解</strong><br><br>火在上泽在下相背而行。乖离之象以和为贵。", "overall": "【现状剖析】你最近陷入了一种跟谁都合不来的状态。跟同事的想法不一致跟伴侣的沟通不顺畅甚至连你自己都有点烦自己。火泽睽卦火在上泽在下两者背道而驰你跟别人之间的分歧已经到了不可调和的程度。但这不是你一个人的问题也不是对方的问题而是你们本来就走在不同的路上。有时候承认不合适比强行在一起更需要勇气。\n\n【体用天机】火向上烧泽向下流方向完全相反。你现在的处境就是鸡同鸭讲两边说不到一块去。但睽卦的智慧是在分歧中寻找共识。当你觉得跟谁都合不来的时候问题可能不在别人身上而在你自己的状态。先调整自己的心态再去看那些分歧你会发现有些其实没有你想象的那么严重。\n\n【变卦警示】睽卦最忌的就是因为赌气而把关系搞僵。你现在说的每一句伤人的话做的每一个冲动的决定都可能让你后悔。在分歧面前先冷静三天。三天后你再看那些让你生气的事发现大部分都是小事。不要因为一时的气头上毁了值得珍惜的关系。", "wealth": "【财运趋势】合伙求财这件事最近几个月都别想了。你跟任何人都合不来强行合作只会把之前的情分也搭进去。如果你现在有合伙的生意正在闹矛盾请在月底之前谈好散伙方案。好聚好散比撕破脸强一百倍。那些在合作中因为面子而不愿意谈清楚的事情最后都会变成炸弹。\n\n【细节断语】近期的财运宜独力不宜合伙。不要跟人合作做生意也不要跟朋友一起投资。你的判断力在这段时期是偏执的你觉得对的事情别人劝不住你觉得错的事情别人拉不回。这个状态不适合做任何需要团队协作的财务决策。自己的钱自己管谁也别说。\n\n【避坑指南】在分歧时期最容易犯的错误就是报复性消费——心情不好就花钱买快乐。但这样只会让你的财务状况雪上加霜。控制住自己的消费欲望等情绪平复了再做决定。那些在心情不好的时候买的东西大部分都是你不需要的。那些因为气头上花的钱最后都会变成你心头的刺。", "love": "【感情现状】你正在经历一场严重的三观不合。你跟对方在很多根本性的问题上的看法都不一样。这种差异在平时被甜言蜜语盖住了但在遇到实际问题时就会暴露无遗。你现在发现的那些分歧其实一直都在只是你们之前选择视而不见。但现在那些问题已经大到无法再忽视了。\n\n【桃花指引】睽卦在感情中代表差异性。你发现你跟对方不是一类人这个发现会让你很痛苦但也是一个清醒的机会。不要因为习惯了就强行在一起也不要因为害怕失去就假装没问题。有些差异可以磨合但有些差异是根深蒂固的根本无法改变。\n\n【避坑指南】在做出任何决定之前请先给自己一周的冷静期。你现在看这段关系可能带着情绪。等情绪过去了你再看清楚这段关系是否还有继续的价值。有些关系的结束不是谁对谁错而是两个人本来就应该走向不同的方向。不合适的鞋子磨的是你的脚不是鞋子的错。", "career": "【工作状态】职场上的分歧已经摆到了桌面上。你跟同事或领导的意见分歧很大而且看起来根本没有调和的余地。这种时候不要硬碰硬——先顺着对方的意思走等有了实际结果再用数据说话。不要因为一时的意气之争毁了你在这个平台上的发展空间。职场是一个看结果的地方不是看过程的地方。\n\n【细节断语】如果内部的分歧已经无法调和你可能需要考虑换一个更适合你的环境。但这不代表你现在就要辞职。先找好下家先了解市场情况再做出决定。不要裸辞不要冲动。每一次跳槽都应该是为了更好的发展而不是为了逃避当前的困境。\n\n【避坑指南】在睽卦时期你在职场中最需要的就是耐心。不要急着证明自己是对的也不要急着推翻别人的方案。用时间去证明用结果去说话。等到你的方案落地了数据出来了那些质疑你的人自然会闭嘴。但在那之前管住你的嘴做好你的事。"}, "3,3": {"name": "离为火", "classic": "<strong>离为火 · 卦辞精解</strong><br><br>明两作离大人以继明照于四方。光明之象。", "overall": "【现状剖析】你现在的脑子比任何时候都清醒。离为火双火相叠照亮一切迷雾你最近的理解力和创造力都处于巅峰状态。之前想不通的事情现在突然有了答案做不出的方案现在灵感源源不断。这种状态简直像开了挂一样做什么都顺手。请珍惜这段灵感迸发的时期把你的创意和想法都记录下来。这些在你脑中闪过的灵感可能是你未来最重要的财富。\n\n【体用天机】双重火焰照亮四方。你现在的状态就像一盏聚光灯你走到哪里哪里就亮。你的观点你的判断你的创意都比平时更靠谱更犀利。因为你内心的那团火正在熊熊燃烧它带走了你所有的犹豫和迟疑让你变得果断而清晰。现在的你最适合做那些需要深度思考的事情——写方案画图纸做研究。\n\n【变卦警示】但离卦也提醒你过刚则易折。你的聪明和锐利可能会让你看不起那些跟不上你思路的人。你那种不屑一顾的表情正在默默地伤害你的人际关系。有些人可能没有你聪明但他们可能在别的地方能帮到你。不要因为自己太闪耀就忽略了那些在阴影里的人。天才也需要支持者。", "wealth": "【财运趋势】你最近的赚钱靠的不是运气而是实力。离卦的财运属于才华变现——你的技术你的知识你的创意最近都能卖出好价钱。如果你有技能在手现在是时候把它变成现金流了。你的作品现在值这个价不要因为不好意思就降低自己的报价。你提供的价值值得你收取相应的回报。\n\n【细节断语】知识就是力量这句话在离卦时期变成了知识就是金钱。你最近的学习能力吸收能力都很强学什么会什么会什么就能变现。这种状态非常难得请充分利用。但也要注意不要因为赚钱而过度透支自己的精力。钱是赚不完的但身体是有限的。在才华变现的同时也要学会保护好自己的才华。\n\n【避坑指南】离卦最忌讳的就是因为太过自信而做出错误的财务判断。你现在觉得自己看什么都很准但这可能是一种错觉。在重大的投资决策面前请务必找第三方的意见。那些你认为万无一失的项目可能只是因为你太相信自己了。兼听则明偏信则暗。", "love": "【感情现状】你在感情里太光明磊落了反而让对方有点不安。你不喜欢暧昧不喜欢猜忌喜欢什么事都摆在台面上说清楚。这种态度本身是好的但请给对方一点适应你节奏的时间。不是所有人都习惯直来直去的沟通方式。有些人需要在慢慢相处中一点点敞开心扉。你的直接是一种美德但也是一种压力。\n\n【桃花指引】你最近在感情中的直率和真诚是最大的加分项。但直率不等于不顾对方的感受。在表达你的真实想法之前先考虑一下对方的接受能力。好的沟通不是你想说什么就说什么而是用对方能接受的方式说你想说的话。这中间的差别决定了你是一个真实的人还是一个情商低的人。\n\n【避坑指南】单身的朋友你可能对另一半的要求太高了。你希望对方跟你一样聪明一样有志趣一样的思维方式。但爱情的美妙之处不正是互补吗？那些跟你不同的人可能会给你带来完全不同的视角和体验。试着接受那些跟你不一样的人你会发现世界比你想象的更大更精彩。", "career": "【工作状态】你的才华正在被越来越多的人看到。你做的方案被老板点名表扬你写的报告在部门内部成了范本这种被认可的滋味确实很好。但请不要把所有的功劳都归到自己头上。你的成功离不开团队的支持和配合。那些在你背后默默支持你的同事也需要你的认可和感谢。一个懂得感恩的人在职场上才能走得更远。\n\n【细节断语】你现在的创造力和解决问题的能力正处于爆发期。领导交给你的任何任务你都能想出创新的解决方案。但这种状态也容易让你变得骄傲。记住今天的成绩只能代表你的过去不能代表你的未来。保持饥饿保持愚蠢保持学习的热情。乔布斯这句话放在任何时候都是真理。\n\n【避坑指南】离卦时期在职场中要注意不要过于表现自己。你的光芒太耀眼了可能会让其他同事感到压力。在不影响工作质量的前提下适当低调一些。那些在领导和同事面前都做得好的人才是真正聪明的人。既要让领导看到你的价值也要让同事感受到你的谦逊。"}, "3,4": {"name": "火雷噬嗑", "classic": "<strong>火雷噬嗑 · 卦辞精解</strong><br><br>颐中有物曰噬嗑。决断排除障碍之象。", "overall": "【现状剖析】你面前有一块卡了很久的硬骨头现在必须咬碎它。火雷噬嗑卦就像嘴里卡了一根鱼刺——你越是假装它不存在它就扎得越疼。那个你拖了大半年都不敢面对的问题那个你一直在逃避的难缠客户甚至是那段你明知道该结束却一直拖着的关系现在到了非解决不可的时候了。这把刀你不砍下去它会一直架在你脖子上让你日夜不安。\n\n【体用天机】火雷交加咬合之象。你现在的处境就像嘴里卡了东西不吐不快。那些你一直逃避的问题正在以各种方式提醒你它们的存在——每次想到就心烦每次看到就焦虑。解决这些问题比你想象的简单你只是被自己的恐惧放大了难度。当你真正去做的时候你会发现其实也就那样。\n\n【变卦警示】噬嗑卦提醒你用强硬手段解决问题时要注意方法。不是所有的硬骨头都要用蛮力去啃有时候用巧劲能事半功倍。在决定怎么解决问题之前先花时间想想有没有更聪明的方法。同样的结果用省力的方式达成才是高手的做法。不要为了显得努力而选择最笨的方式。", "wealth": "【财运趋势】清账催款的最佳时机到了。你借出去一直不好意思要回来的那笔钱现在可以开口了。如果你在做业务最近收回应收账款的概率会非常高。主动出击把旧账清了你才有资金去做新的事情。那些被人在外面拖欠的钱就是你成长路上的绊脚石。搬开它你才能往前走。\n\n【细节断语】在催收的时候要有策略不要因为怕伤和气就怯场。你可以很温和但你的立场要坚定。这个钱是多少什么时候还清清楚楚地讲明白不要让对方觉得你无所谓。很多时候要不回钱不是因为对方没钱而是因为对方觉得你不在乎。你在乎了钱就回来了。\n\n【避坑指南】近期也要注意清理那些长期的财务包袱。那些已经确定亏损的投资那些不会再产生价值的资产那些你已经不需要但还在付钱的订阅服务——全部清理掉。只有清空了那些没用的东西真正有价值的财富才能进来。财务上的断舍离是你走向财务自由的第一步。", "love": "【感情现状】你们之间有一些积压了很久的问题该摊开来谈了。那些你一直憋在心里不敢说的怨气那些你觉得说出来会破坏关系的话现在就是最好的时机。把话说开了虽然过程会有点痛但总比一直烂在心里强。很多关系不是死于激烈的争吵而是死于长期的沉默。你就这样一直憋着迟早会憋出问题。\n\n【桃花指引】噬嗑卦在感情中的意义是把问题啃碎消化掉。不要逃避不要拖延不要觉得时间会解决问题。时间只会让问题发酵让矛盾加深。趁现在还有补救的机会趁你们之间的感情基础还在赶紧把问题摊开来说。拖得越久解决的成本越高关系修复的难度越大。\n\n【避坑指南】在谈论那些敏感话题时要注意语气和态度。你说话的方式比你说什么更重要。用我开头而不是用你开头。比如我觉得我们的沟通出了问题而不是你就是不听我说话。同样的意思用不同的方式表达效果会截然不同。好的表达方式能让问题解决事半功倍。", "career": "【工作状态】工作中那个老大难的项目或客户现在是解决他们的最佳时机。你一直不敢碰的那个硬骨头其实没有你想象的那么难。拿出你的专业态度正面迎击。解决了这个大麻烦之后你会发现自己的职场位置完全不一样了。那些棘手的问题往往是机会的伪装。你解决了别人解决不了的问题你就获得了别人获得不了的机会。\n\n【细节断语】你现在的执行力比平时更强敢于面对困难和挑战。不要浪费这股劲头趁热打铁把过去积压的那些难题一次性处理掉。当你把所有的问题都清理干净了你才能轻装上阵开始新的征程。把心里的石头一块一块搬开你的路才会越走越宽。\n\n【避坑指南】在解决老大难问题的过程中可能会触及一些人的利益或敏感区域。请提前做好风险评估和心理准备。不要因为解决一个问题而制造更多的问题。你的目标是以最小的代价获得最好的结果而不是逞英雄。智慧和勇气都很重要但知道什么时候用哪个更重要。"}, "3,5": {"name": "火风鼎", "classic": "<strong>火风鼎 · 卦辞精解</strong><br><br>以木巽火烹饪之象。革故鼎新开创新局。", "overall": "【现状剖析】你的人生正在翻开崭新的篇章。火风鼎卦以木生火烹饪食物你现在正处在一个全新阶段的起点。你可能会开启一段全新的关系换一份你真正热爱的工作或者搬去一个你向往已久的城市。这不是小打小闹的改变而是你命运的转折点。请不要用过去的经验来预测未来的可能性你的未来跟过去完全不一样。\n\n【体用天机】鼎卦的核心是创新和建立。你现在的任务不是修补旧的东西而是创造新的东西。就像用一个新的锅来煮新的食物一样。过去的模式和思维已经不适合你了你需要一套全新的系统来支撑你的未来。这可能让人感到不安因为没有参考系。但正是这种不确定性带来了无限的可能性。\n\n【变卦警示】建鼎不易守鼎更难。新的开始总是美好的但如何让这个好的开始持续下去才是真正的考验。在开启新篇章的同时请制定好长期的发展计划把一时的热情转化为持续的坚持。只有烟花般的热情是不够的你需要的是火炬一般的持久燃烧。一时的冲动只会让新篇章变成一个短暂的插曲。", "wealth": "【财运趋势】新的财富通道正在向你打开。鼎卦告诉你你之前赖以为生的那套赚钱方式已经跟不上时代了。现在是时候开发新的收入来源了——可能是一项你一直想学但没学成的技能也可能是一个你一直想做但不敢开始的副业。如果你不去探索新的可能你的收入天花板就在眼前了。这不是猜测而是事实因为时代在变赚钱的方式也在变。\n\n【细节断语】鼎卦的财富逻辑是用新的方法赚新的钱。那些旧的赚钱模式正在失效但新的机会也在同时出现。关键是你愿不愿意走出你的舒适区去学习新的东西去尝试新的可能。你不会的东西决定了你的天花板在哪里。每学会一项新技能就是在打破一层天花板。\n\n【避坑指南】在探索新方向的同时也要注意控制风险。新的收入渠道需要时间去培养在它稳定之前请保持你现有的收入来源。用业余时间去学习去尝试当新的收入超过旧的收入时再考虑转型。这样做虽然慢但最安全。那些孤注一掷的人要么一飞冲天要么一败涂地而大多数人都是后者。", "love": "【感情现状】你遇到的人将会是完全不同的类型跟你的前任完全不同跟你以前喜欢过的类型完全不同甚至跟你平时想象中的类型完全不同。但正是这种不同会带给你前所未有的新鲜感和吸引力。那些你之前一直坚持的择偶标准在你遇到这个人的时候可能会全部瓦解因为对的人从来不是按照你的标准定制出来的。\n\n【桃花指引】鼎卦在感情中代表新的开始。如果你刚刚结束一段关系现在是时候向前看了。不要因为过去的伤痛而把自己的心门关上。每一段新的感情都是一次全新的体验不要去比较也不要去预设。把你杯子里的陈水倒掉新鲜的茶才能倒进来。保持着空杯的心态去迎接下一个可能。\n\n【避坑指南】新的开始总是美好的但不要被新鲜感蒙蔽了双眼。在投入一段新关系之前请花足够的时间去了解对方。不要因为对方跟你以前认识的人不一样就认为对方一定是对的人。不一样不等于对。保持开放的心态但同时也要保持清醒。新和好是两回事。", "career": "【工作状态】你在职场中正在迎来一次华丽的转身。你可能正在考虑转行创业或者跳槽到一个完全陌生的领域。这个决定看起来风险很大但鼎卦告诉你现在是开启新局面的最佳时机。你心中那个大胆的想法比你想象的更有市场可行性也更被时代所需要。不要让你的恐惧扼杀了你的可能性。\n\n【细节断语】鼎卦职场的核心是创新和突破。那些按部就班的事情已经不能让你兴奋了那些循规蹈矩的路径已经不能让你满意了。这是你的内心在告诉你你需要更大的舞台更广阔的天地。请不要压抑这种渴望。但也不要冲动地裸辞。在追求新的可能性的同时请为自己保留一条退路。\n\n【避坑指南】新的领域新的岗位新的挑战都需要你投入大量的时间和精力去学习去适应。在决定转型之前请做好充分的市场调研和自我评估。不要因为一时的迷茫或厌倦而做出影响深远的决定。每一次成功的转型背后都有一个深思熟虑的规划。冲动是魔鬼这句话在任何时候都适用。"}, "3,6": {"name": "火水未济", "classic": "<strong>火水未济 · 卦辞精解</strong><br><br>火在水上未济也。事未竟成慎始慎终。", "overall": "【现状剖析】你现在正处在差最后一步就能成功的状态里。未济卦就像火烧水却烧不开一样你明明付出了巨大的努力明明已经走到了一大半但就是卡在最后那一道关口上迈不过去。别着急这不是失败这是在告诉你你离成功就差最后一点点耐心。很多人在这个时候放弃了所以他们永远不知道再坚持一下就能看到什么。\n\n【体用天机】火在水上火向上烧水向下流方向不一致。未济卦代表事情还没有完成。这让你很焦虑因为你已经付出了太多但你离终点还有一段距离。但好消息是未济卦的下一卦是既济卦意思是事情终究会完成的。你现在要做的就是再坚持一下再努力一把。胜利就在眼前了不要在这个时候放弃。\n\n【变卦警示】未济卦给我们的最重要的智慧是慎始慎终。大多数人都是在一开始的时候热情满满但到了最后关头却因为各种原因放弃了。你就是这大多数人中的一个。请回想一下你因为最后一步没有坚持而功亏一篑的经历有多少次了？这一次请务必坚持到底。不要让你的故事再一次以遗憾收场。", "wealth": "【财运趋势】你投进去的资金还没看到回报你付出的努力还没收到成效。这不是你的判断出问题了而是时间还没到。未济卦在财务上的建议是再给你的投资一点耐心。最愚蠢的做法就是在黎明前的一刻清仓离场。那些在底部割肉的人后来都后悔了但时间不会给他们重来的机会。\n\n【细节断语】财务上未完成的状态让你很焦虑但这种焦虑是正常的因为任何投资都需要时间来兑现。但你需要区分的是正常的等待和错误的坚持。如果你投资的基本面没有问题那就继续持有。但如果你的投资逻辑已经不成立了那就要及时止损。区别这两者需要的是理性和勇气。\n\n【避坑指南】在未济卦的财务阶段最忌讳的就是押上所有筹码去赌最后一搏。你已经付出了很多不应该在最后关头把所有希望都赌在一个不确定的结果上。分散风险保留退路。即使这次没有达到预期的回报你也要确保自己还有翻本的机会。保护本金在任何时候都是第一位的。", "love": "【感情现状】你跟某个人之间的关系差了一层窗户纸。你很清楚对方对你有好感你也能感觉到如果再主动一步就能水到渠成但你就是缺了那么一点临门一脚的勇气。请大胆地走出那一步吧。被拒绝的恐惧比被拒绝本身更可怕。你在害怕什么呢？最坏的结果不就是对方说不吗？但万一对方说是呢？\n\n【桃花指引】未济卦在感情中的启示是关系还没有完成但那一步需要你来走。你等对方主动对方也在等你主动。两个人都等着不动这段关系就永远停留在未完成的状态。有时候需要有人先迈出那一步。为什么不能是你呢？爱情里谁先主动不重要重要的是有结果。\n\n【避坑指南】有伴侣的人你们之间可能还有一些未完成的事情——那些说好了要做但一直没做的事那些承诺了但没兑现的话。趁现在把这些未完的事情处理完。不要让你的感情一直停留在欠债的状态里。那些未完成的承诺就像感情里的一个个小伤口不及时处理迟早会发炎溃烂。", "career": "【工作状态】你手头的项目已经到了最后的冲刺阶段。虽然还有很多小问题没有解决但大方向是对的。不要让那些细枝末节的完美主义拖慢了你上线的节奏。先完成再完美这句话在未济卦阶段就是你最好的行动指南。先把事情做出来再在迭代中不断优化。等你把所有问题都解决完了再上线机会可能已经跑了。\n\n【细节断语】你现在离项目完成就差最后一步了但就是这最后一步比前面所有步骤加起来都难。因为到了最后你的精力已经消耗得差不多了你耐心也已经用完了。但恰恰是在你最疲惫的时候你离成功的距离最近。请再坚持一下给自己的努力一个交代。虎头蛇尾是你最不想成为的那种人对吧？\n\n【避坑指南】未济卦在职场中的智慧是重视最后的收尾工作。很多人开头做得很好但结尾草草了事。但恰恰是最后的百分之十决定了人们对整个项目的评价。做完了不等于做好了。在项目收尾的阶段请投入和开始时一样的热情和专注。一个好的结尾比一个好的开头更能让人记住你。"}, "3,7": {"name": "火山旅", "classic": "<strong>火山旅 · 卦辞精解</strong><br><br>山上有火旅也。漂泊不定但机遇常在。", "overall": "【现状剖析】你现在就像住在一个搬不走的行李箱里——工作生活感情都处于一种临时状态。出差搬家换工作异地恋最近的生活关键词就是一个动字。这种不稳定虽然让你感到不安但也充满了新鲜感。旅卦的核心智慧就是适应。你最近练就的随遇而安的能力未来会成为你最宝贵的财富。那些在变动中依然从容的人才是真正有韧性的人。\n\n【体用天机】山上有火火势蔓延行旅之象。你正处于一段频繁移动和变化的时期。但这种不稳定也带来了广阔的视野和丰富的经历。你在这段时间里走过的路见过的人经过的事都在默默地塑造一个更好的你。不要抗拒变动试着去享受这个过程。生命的意义不在于稳定而在于体验。\n\n【变卦警示】旅卦提醒你在漂泊时期最需要的是定位自己。不管外部环境怎么变你的核心价值你的目标你的方向不能变。你是那个旅行的人不是那个随风飘荡的行李。在变动中保持内心的稳定是你现在的必修课。那些在风暴中依然站得稳的人不是因为身体强壮而是因为心里有锚。", "wealth": "【财运趋势】你的财运跟外地两个字息息相关。出差谈成的项目外地的市场机会甚至你在旅途中认识的某个人给你带来的生意。不要守在家门口等机会主动走出去才能找到财富。那些一直待在舒适区里的人永远不知道外面有更大的世界。你这次出差或旅行很可能会给你带来一个意想不到的赚钱机会。\n\n【细节断语】旅卦时期的财富特点是不稳定但有机会。你可能今天在这个城市赚钱明天在那个城市花钱。这种流动性的财富需要你更加主动地去把握。不要等着机会来找你而是主动去寻找每一个可能的财富入口。那些随遇而安但不安于现状的人最容易在这个阶段抓住机会。\n\n【避坑指南】在旅行和移动频繁的时期要注意管理好你的财务安全。不要在陌生的地方轻易相信人也不要让不熟悉的投资项目轻易拿走你的钱。外面的世界很精彩但也很危险。那些在旅途中遇到的赚钱邀约十个里面有九个都是收割你的镰刀。保持警惕保持清醒。", "love": "【感情现状】你最近如果有一场旅行或者出差请保持眼睛睁大一些。因为你的桃花可能出现在路上——飞机邻座酒店大堂或者某个旅游景点里那个主动问你需不需要帮忙拍照的人。不要在旅行中把自己裹得太紧。保持开放和友好的态度因为你永远不知道下一个转角会遇到谁。\n\n【桃花指引】旅卦在感情中的寓意是在路上遇见缘分。你可能在你不熟悉的地方遇到让你心动的人。这种缘分的特点是在不期而遇中发生所以请保持期待保持好奇保持开放。不要把自己关在酒店的房间里也不要一直低头看手机。抬起头来看看周围那个正在看你的人可能就是你的有缘人。\n\n【避坑指南】异地恋或者长途旅行的情侣在这个阶段可能会面临一些考验。距离会产生美也会产生疏远。在不能见面的日子里保持高质量的沟通比频繁但敷衍的联系更重要。每次联系都让对方感受到你的关心和在意每次分离都为了更好的相遇。感情不是靠见面维持的而是靠心意。", "career": "【工作状态】你的工作正在经历一段频繁变动的时期。出差外派调岗或者换工作这段变动期让你缺乏安全感但也充满了机会。每次变动背后都可能藏着一个晋升的契机。那些在变动中抱怨的人看到的是麻烦而那些在变动中主动适应的人看到的是机会。你选择做哪一种人？\n\n【细节断语】旅卦时期的职业策略是灵活应变。不要把自己固化在一个岗位上也不要拒绝那些看起来麻烦的出差和调动。每一次变动都是一次学习和成长的机会。当你换了一个环境你被迫学习新的技能适应新的文化建立新的关系这些都是你职业能力的增值项。\n\n【避坑指南】在频繁变动中要注意保持你的职业人脉。那些你曾经一起工作过的同事合作伙伴客户都是你重要的职业资产。不要因为换了一个地方就断了联系。在旅卦时期你认识的人越多你未来的职业道路就越宽。那些你用心维系的关系会在未来的某个关键时刻给你带来意想不到的帮助。"}, "3,8": {"name": "火地晋", "classic": "<strong>火地晋 · 卦辞精解</strong><br><br>明出地上晋也。晋升前进稳步向上之象。", "overall": "【现状剖析】你正在稳步向上爬升。火地晋卦像太阳从地平线升起一样你现在的职业生涯财务状况甚至个人状态都在稳步提升。你不是一夜暴富式地飙升而是一步一个脚印地向上走。这种上升虽然看起来速度不快但它是最牢靠的。因为你的每一步都踩得很稳不会轻易跌落。你在过去六个月里付出的努力现在开始显现回报了。\n\n【体用天机】太阳从地平线上升起光明渐显。你现在正处于一个稳步上升的通道里。虽然不是你期待的那种一夜爆发的快感但这种缓慢而稳定的进步让你心里踏实。你知道自己为什么会走到今天这一步因为每一步都有迹可循。不像那些暴富的人可能明天就回到原点你的上升建立在扎实的基础之上。\n\n【变卦警示】晋卦提醒你在上升的过程中不要忘记那些还在下面的人。你的成功离不开那些曾经帮助过你的人。在你往上走的时候回头看一看拉一把那些还在努力往上爬的人。这不仅是一种感恩也是一种投资。你永远不知道你今天拉的那个人明天会成为你的贵人。善良是一种会循环的能量。", "wealth": "【财运趋势】你的收入和你的社会地位正在同步提升。你可能刚升了职或者最近被上级点名表扬了。这种地位的提升带来的附加价值远远超过了工资涨幅——你的人脉圈在扩张你说话的份量在变重。请利用好这股上升势头。你现在所处的每一个平台每一段关系都可能成为你未来更大的跳板。\n\n【细节断语】晋卦的财富趋势是稳定上升不是暴富。这其实是一件好事因为稳步提升的财富才是可持续的。那些一夜暴富的人最后大部分都回到了原点。但你这种因能力提升和社会地位提高而带来的收入增长是最靠谱的。因为你的价值在提高所以你的收入在提高这是最健康的财务增长模式。\n\n【避坑指南】在财富上升期最需要注意的是消费心态的调整。收入增加了消费水平也应该适当提高但不要提高得比收入快。很多人在升职加薪之后就开始换车换房换生活方式结果工资涨了月光也涨了。你的生活水平应该低于你的收入水平而不是等于或高于。这个差距就是你未来财务自由的资本。", "love": "【感情现状】你最近整体的状态都在上升。单身的朋友你的吸引力在提高不是因为打扮了而是你身上那种积极向上的能量感染了周围的人。有伴侣的你们会发现关系比以前更和谐了因为你的情绪好了看什么都顺眼了。你好了你的世界就好了这句话在晋卦阶段得到了最好的验证。\n\n【桃花指引】你现在整个人都在发光。不是因为穿了什么名牌也不是因为化了多精致的妆而是因为你事业顺利心情愉悦整个人由内而外地散发着一种让人想要靠近的气息。这种自信和大方是最天然的吸引力。那些被你吸引过来的人是因为你的能量场而不是因为你的外在条件。这才是真正长久的吸引力。\n\n【避坑指南】晋卦时期的感情策略是顺势而为不要刻意追求。你现在的状态好到不需要刻意去做什么好事好事自然就会来找你。缘分也是一样当你的状态对了那个对的人就会不期而至。你需要的只是保持你现在的状态继续向前。那些属于你的东西会在对的时机以对的方式来到你身边。", "career": "【工作状态】晋升的通道正在为你打开。你的直属领导已经开始在高层面前推荐你了你最近可能会收到一个比别人更好的发展机会。请主动在合适的场合表达你愿意承担更大责任的意愿。机会不会自动来找那些默默等待的人需要你主动去争取。那些想要的东西说出来才有可能得到。\n\n【细节断语】你现在正处在职场上升的最关键时期。每一个项目每一次发言每一个表现都被上级看在眼里。请在这些关键时刻展现出你最好的状态。因为你的未来取决于你在这些关键时刻的表现。平时可以放松但在关键节点上一定要拿出最好的自己。这种能力决定了你能在职场走多远。\n\n【避坑指南】晋卦时期的职场策略是稳定前进不要急躁。升职加薪固然重要但更重要的是你的能力是否真的达到了那个岗位的要求。在晋卦阶段稳扎稳打比追求速度更重要。你今天的每一步都要为未来打好基础。能力和岗位是相匹配的你能力到了位置自然就到了。不要急于求成也不要满足于现状。"}, "4,1": {"name": "雷天大壮", "classic": "<strong>雷天大壮 · 卦辞精解</strong><br><br>雷在天上大壮也。刚健有力但忌恃强。", "overall": "【现状剖析】你现在浑身都是使不完的劲。雷天大壮卦雷在天上声势浩大你正处于一个精力充沛信心爆棚的阶段。你觉得自己什么都能搞定什么困难都不在话下。这种气势确实很感染人但你有没有注意到用力过猛容易把别人推远？你上周是不是在跟人争论时嗓门大了点或者在推进项目时根本没考虑其他人的节奏？力量是一种好东西但不会控制力量的人只会让人害怕。\n\n【体用天机】雷在天上气势宏大但过刚则易折。你现在就像一辆高速行驶的跑车——速度很快动力很足但你的刹车系统呢？你知道什么时候该停吗？你最近因为太过强势已经得罪了不少人自己却没意识到。真正的强大不是从不示弱而是在该示弱的时候敢于示弱。真正的力量是收放自如而不是一味地碾压。\n\n【变卦警示】大壮卦的爻辞说羝羊触藩羸其角——一只公羊用角去撞篱笆结果角被卡住了。你现在的处境就是这样。你太想往前冲太想证明自己结果把自己卡在了进退两难的境地。越是这种时候你越要冷静下来想一想你是不是在用错误的方式在做正确的事。换一种方式可能会更有效。", "wealth": "【财运趋势】你的财运正处于一波凶猛的涨势中。适合做短期冲刺和突击项目你的执行力和决断力目前处于峰值。但大壮卦提醒你别把所有的弹药都一次打光。分散风险不要把所有钱都投进一个项目里。再好的行情也有回调的时候在高位加杠杆的最后都会死得很惨。哪怕你现在的判断百分之百正确也要给自己留一条退路。\n\n【细节断语】你现在做事的效率高到吓人但在财务决策上冲动是你最大的敌人。你看到机会就想扑上去看到项目就想投资。但请记住不是所有的机会都属于你。那些你能力圈之外的钱赚不到的领域最好不要碰。大壮卦时期赚到的钱要学会锁定不要让它再流出去。成功的投资者不是会赚钱的人而是会守钱的人。\n\n【避坑指南】大壮卦的财富陷阱是过度自信。你现在做什么都顺这会让你产生一种错觉——以为自己不会犯错。但每个人都会犯错区别只是有的人犯了错能及时止损有的人犯了错拒不承认。对自己当下的投资和财务状况做一个全面的复盘那些潜在的风险点在哪里提前做好应对方案。不做准备的人就是在准备失败。", "love": "【感情现状】你在感情里的表达方式太直给了一点。喜欢就直接说想见就马上约不高兴当场就甩脸子。这种性格虽然很真实但不是所有人都能承受你这种暴风骤雨般的热情。请稍微收一收。你的热情是一团火可以温暖对方也可以灼伤对方。好的感情不是靠猛烈的进攻而是靠持续的温暖。慢一点稳一点让感情在舒适的节奏中发展。\n\n【桃花指引】你这种直接的性格在感情里其实很珍贵因为你不玩套路不搞暧昧。但问题是你太急了。你刚认识一个人就已经在想以后的事了你刚确定关系就已经在想结婚的事。你把感情的进度条拉得太快了对方跟不上你的节奏。感情不是赛跑而是一起散步。太快了对方会觉得累太慢了你会觉得急。找到一个两个人都舒服的节奏才是关键。\n\n【避坑指南】有伴侣的人你们最近可能因为你的强势而产生一些小摩擦。你可能觉得自己只是讲话大声一点而已但对方可能觉得自己在被训斥。请留意一下你的语气和态度。同样的内容用温和的方式说出来效果完全不一样。对待最亲近的人你要用最温柔的方式。把最好的脾气留给最好的人。", "career": "【工作状态】你在职场中的执行力正处于爆发期。你最近做事效率特别高一天能干完平时三天的工作量。趁这股劲头赶紧把积压的任务清掉但你也要注意节奏不要因为追求速度而牺牲了质量。速度快不等于效率高质量高才是真正的效率。那些为了赶进度而马虎了事的人最后都在返工上花了更多的时间。\n\n【细节断语】你现在是一个能量满满的小太阳但请记住不要把你的光和热照到所有地方。不是所有的项目都值得你投入全部精力不是所有的任务都值得你全力以赴。学会分配你的精力把百分之八十的精力放在那百分之二十最重要的事情上。这就是职场上著名的二八原则。那些什么都想做的人最后什么都做不好。\n\n【避坑指南】大壮卦时期在职场中要特别留意你的同事关系。你雷厉风行的做事风格可能会给其他同事带来压力。有些人会觉得你在抢风头有些人会觉得你在给他们制造焦虑。在高调做事的同时也要低调做人。尽量让同事们感受到你的好而不是你的强。一个让人又敬又怕的同事和一个让人又敬又爱的人你希望自己是哪一个？"}, "5,1": {"name": "风天小畜", "classic": "<strong>风天小畜 · 卦辞精解</strong><br><br>风行天上小畜也。积蓄力量以待时机。", "overall": "【现状剖析】你现在的处境就像是在往一个巨大的蓄水池里注水。你已经有一些积累了——存了一笔小钱积累了一些人脉掌握了几项技能。但你的水还没蓄满现在就开闸放水只会让你的池子彻底干涸。你最近是不是特别急着想做点什么来证明自己的价值？再忍一忍你离爆发就差最后这段积累期了。你现在的感觉就像考试前的最后一个晚上虽然你已经复习了很久但总觉得自己还没有准备好。其实你已经准备好了你只是需要一点信心。\n\n【体用天机】风行天上尚未下雨积蓄之象。你现在的能力和资源正在积累过程中但还没有到爆发的时候。这个过程确实让人着急因为你已经付出很多了但还没有看到结果。但请相信你不是没有成长你只是在扎根。那些看起来毫无进展的日子里你的根系正在深入地下去吸取更深的养分。等到你破土而出的那一天所有人才会看到你的高度。\n\n【变卦警示】小畜卦提醒你不要急于求成。你现在看到的那些成功的人他们也不是一夜之间就成功的。他们也有过漫长的积累期只是他们的积累期你无缘见到。你现在正在经历的时期就是你的积累期。不要因为暂时的沉默而怀疑自己的价值。所有的沉默都是为了更响亮的声音。等你准备好了一切都会水到渠成。", "wealth": "【财运趋势】你目前正处在财富积累的初级阶段每一分钱都应该花在刀刃上。小畜卦的财富密码是延迟满足——现在忍住不花的钱未来会以几倍的规模回到你手里。不要在这个阶段购买奢侈品先建立你的应急储备金。你现在看起来的自律和不自由都是为了未来的自由。那些在最该存钱的时候选择消费的人在他们最需要钱的时候往往一分钱都拿不出来。\n\n【细节断语】财务上的积累是一个漫长的过程你不可能永远都处在快速增长的阶段。小畜卦的阶段就是你的财务蓄水期。每一笔储蓄每一次节制都在为你的未来做准备。那些你看似少喝的一杯杯咖啡少买的一件件衣服在时间的复利作用下会变成一笔可观的财富。你不是在省钱你是在为自己的未来投资。\n\n【避坑指南】不要在这个阶段跟别人攀比财富和生活水平。那些看起来比你过得好的人可能只是比你更会花钱而不是比你更有钱。更可悲的是有些人为了面子不惜透支未来只为了在朋友圈里看起来过得很好。你不需要这样。你的财富是你自己的事情不需要向任何人证明。那些真正有钱的人往往看起来最普通。", "love": "【感情现状】你们之间的关系还处在需要慢慢培养的阶段。你可能是太着急想要一个结果了——刚认识就想确定关系刚在一起就想谈婚论嫁。小畜卦告诉你感情也需要积累需要时间慢慢经营。好的感情不是一见钟情的热烈而是日积月累的深情。那些认识三天就在一起的人可能三个月后就分开了而那些从朋友做起慢慢培养感情的人往往能走一辈子。\n\n【桃花指引】在感情上你也需要一些耐心。你现在付出的每一分关心每一分陪伴每一次小小的包容都是在为未来的感情积蓄能量。不要觉得做了没有回报是因为时间还没到。感情的投资和金钱的投资一样都需要时间来兑现。等你积蓄到一定程度全部的付出都会以十倍的爱回到你身上。\n\n【避坑指南】单身的朋友你现在可能需要先把自己积累好。你的积累包括你的情绪管理能力你的沟通技巧你的经济基础。在你自己还没有准备好的时候匆忙开始一段感情往往不会有好结果。先做好自己再说别人的事。当你把自己积累成一座宝藏的时候自然会有识货的人来找你。", "career": "【工作状态】你现在最重要的是积累而不是变现。不要急着跳槽或升职你现在的能力和资源还撑不起更大的平台。每一份工作经历都是你未来的垫脚石不要因为暂时的工资低而轻易放弃。你现在所在的平台可能看起来很普通但它给你提供的学习机会和成长空间可能远超你的想象。在还没有学到足够的东西之前就离开才是最大的损失。\n\n【细节断语】在职场上你现在的状态是在积累不是变现。把现在的每一天都当作学习的机会把你身边的每一个同事都当作学习的对象。那些看起来不起眼的技能那些你觉得没用的经验在未来某个时刻可能会成为你的核心竞争力。职场上没有白走的路每一步都算数。你现在经历的每一件小事都在为你的未来铺路。\n\n【避坑指南】小畜卦时期的职业策略是韬光养晦低调积累。不要急着展示你的全部能力不要急着让所有人看到你的价值。把真正的实力藏起来在关键的时刻再展现出来。过早暴露自己的底牌只会让你在关键时刻失去优势。那些在平时不显山不露水的人往往在关键时刻一鸣惊人因为他们知道什么时候该亮剑。"}, "5,2": {"name": "风泽中孚", "classic": "<strong>风泽中孚 · 卦辞精解</strong><br><br>泽上有风中孚也。诚信感化以诚为本。", "overall": "【现状剖析】你现在最大的资本不是你银行里的存款而是你的信誉。风泽中孚卦风在泽上你的名声正在像风一样吹向四面八方。你最近在圈子里的口碑越来越好——大家都觉得你靠谱说你答应的事一定能办到。这种信誉资产会在你意想不到的时候给你带来巨大的回报。保持你的真诚现在的你就是一块金字招牌。有时候你说一句话比别人说十句都管用因为大家信任你。\n\n【体用天机】中孚卦代表诚信的力量。你过去每一次守信每一次兑现承诺每一次说到做到都在为你今天的信誉加分。现在你正在收获这些好习惯带来的红利。那些愿意跟你合作的人那些愿意给你机会的人不是因为你有多厉害而是因为你靠谱。在这个信用逐渐稀缺的时代你的诚信就是你最大的竞争力。\n\n【变卦警示】但中孚卦也提醒你一旦失去了信用就很难再建立起来。不要因为一时的利益而做出有损信誉的事情。那些为了短期利益而牺牲长期信誉的人是最愚蠢的。一个在商场上失去了信誉的人就像一条在岸上的鱼——再挣扎也没用。保护你的信誉就像保护你的眼睛一样重要。", "wealth": "【财运趋势】你的财运现在跟你的信誉直接挂钩。你的口碑越好赚钱的门路就越广。那些跟你合作过的人都愿意介绍新客户给你因为你靠谱因为你从不让人失望。诚信经营短期内可能看不到立竿见影的回报但时间会给你复利式的回馈。你积累的每一个客户的信任都会在未来以订单的方式回报你。\n\n【细节断语】中孚卦的财富密码是以诚待人。你不是最聪明的那个人也不是最会做生意的那个人但你是最真诚的那个人。而恰恰是这种真诚让你在众多竞争者中脱颖而出。因为在这个人人都想走捷径的时代一个愿意走正道的人反而成了最稀缺的资源。你的诚信不是你的弱点而是你最锋利的武器。\n\n【避坑指南】在财运上升期要警惕那些利用你诚信的人。不是所有人都值得你以诚相待有些人会利用你的善良来占你的便宜。在保持诚信的同时也要保持警惕。学会分辨哪些人值得你信任哪些人不值得。你的真诚应该给那些同样真诚的人而不是那些只会利用你的人。给错了人你的真诚就成了别人眼中的傻。", "love": "【感情现状】在感情里最好的策略就是真诚。不要为了讨好对方而假装成另一个人不要为了维持关系而隐瞒真实的自己。真正适合你的人爱的就是那个不完美的你。任何一段建立在虚假形象上的感情都是沙滩上的城堡浪一冲就倒了。那些一开始就伪装自己的人最后都活得很累因为他们必须一直演下去直到演不动的那一天。\n\n【桃花指引】你的真诚在感情中是你最大的魅力点。你不玩套路不搞暧昧你喜欢一个人就直接表达你的想法。在这个人人都在算计的时代你的直接和真诚反而成了一股清流。那些真正值得你爱的人会被你的真诚打动那些不值得的人就让他们走吧。你不需要讨好所有人你只需要找到那个欣赏你的人。\n\n【避坑指南】感情中最怕的就是为了维持关系而委屈自己。你明明不开心却假装开心明明介意却假装大度。这种自我压抑的状态不会维持太久迟早会爆发。一段健康的关系不需要任何一方委屈求全。学会表达你的真实感受学会设立你的底线。那些因为你的真实而离开你的人本来就不属于你。", "career": "【工作状态】你在职场上的靠谱正在变成你最强的竞争力。领导放心把重要任务交给你同事愿意跟你合作深入的项目。请继续保持这种值得信赖的状态不要因为急于求成而做出任何一个有损信誉的决定。在职场上一个人的能力和业绩是很重要的但比能力和业绩更重要的是这个人靠不靠谱。一个靠谱的人即使能力差一点也有人在背后托着他。\n\n【细节断语】中孚卦在职场的核心是建立信任。你现在的每一个承诺每一次交付都是你信任账户的一笔存款。你存得越多你在职场上的信用额度就越高。等到你需要的时候你随时可以从这个账户里取款。这就是那些关键时刻有人帮你有人举荐你的原因——因为他们相信你。\n\n【避坑指南】在保持诚信的同时也要学会保护好自己的边界。不是所有的工作都应该接不是所有的请求都应该答应。过度承诺最后无法兑现比一开始就拒绝更伤害你的信誉。学会说不是职场最重要的能力之一。你知道自己能做什么然后只承诺自己能做的事情这本身就是一种靠谱。"}, "4,2": {"name": "雷泽归妹", "classic": "<strong>雷泽归妹 · 卦辞精解</strong><br><br>泽上有雷归妹也。结合嫁娶名正言顺。", "overall": "【现状剖析】你的人生正处在某个重要的结合节点上。归妹卦最核心的意象就是嫁娶——两个独立个体要融合了。这种融合可能是你跟某个人的感情走到了谈婚论嫁的阶段也可能是你跟一家公司或一个项目的深度绑定。不管这个结合是什么归妹卦都在提醒你名不正则言不顺该有的仪式和承诺一个都不能少。你心里应该很清楚那些该办的事一直拖着不办最后只会留下隐患。它会在未来的某一天以你意想不到的方式爆发出来。\n\n【体用天机】泽上有雷婚嫁之象。归妹卦告诉你一段关系如果没有正式的名分和承诺就永远不会稳定。不管是感情还是合作把该办的手续办了该签的合同签了该给的承诺给了。在这些事情上含糊不清的人要么是不够在乎要么是给自己留退路。不管是哪一种你都不应该把时间和感情浪费在这样的人身上。\n\n【变卦警示】归妹卦的凶象在于过度迁就。在任何形式的结合中如果一方过度迁就另一方这种关系都不会长久。健康的结合是平等的不是一方委屈自己来成全另一方。在结合之前想清楚你的底线在哪里哪些是你可以妥协的哪些是你绝对不能让步的。保护好自己才能在关系中获得真正的幸福。", "wealth": "【财运趋势】合作这件事最近看起来很美但暗藏杀机。对方可能看起来资源多能力好人品好但不平等的合作关系往往会在利益面前露出真面目。如果你正在考虑跟人合伙做生意请务必在签合同之前找个第三方法务帮你审一遍条款。那些你看不出来或者看不懂的条款可能就是为你量身定做的陷阱。\n\n【细节断语】归妹卦在财务上代表合作求财。但前提是这个合作双方必须地位平等利益分配公平。如果你在合作中需要不断地妥协不断地让步不断牺牲自己的利益那这个合作还不如不合作。不是所有的合作都能带来利益有些合作只会给你带来损失和教训。学会分辨什么是好的合作什么是坏的合作为自己省下很多不必要的学费。\n\n【避坑指南】在签订任何合作协议之前请把所有的事情都摆在台面上说清楚。不要因为不好意思而跳过那些敏感的话题那些你不好意思谈的问题往往就是未来最大的坑。在合作开始前把最坏的情况预案做好。那些在合作前把所有可能性都谈清楚的人才能在合作中游刃有余。", "love": "【感情现状】你可能正在考虑跟某人进入一段正式的关系——同居见家长或者领证结婚。请确保这个决定是出自你自己的意愿而不是因为外界的压力。归妹卦的征凶就是在告诉你如果心里还有一丝犹豫就再等一等。结婚这件事不是完成任务的节点而是幸福生活的开始。如果你不是在真心感到幸福的情况下走入婚姻那这个婚姻从一开始就有了裂痕。\n\n【桃花指引】归妹卦在感情中最怕的就是冲动决策。你可能因为一时冲动而做出影响一生的决定。也可能因为外界压力而选择妥协。但请记住你的人生是你自己的你的婚姻也是你自己的。那些给你压力的人不会替你过你的生活他们只负责催促不负责后果。所以在做任何重大决定之前请先问问自己这是你想要的吗？还是别人希望你想要的？\n\n【避坑指南】有伴侣的人如果你们已经在考虑更进一步请确保你们已经做好了充分的准备。准备包括经济基础也包括心理成熟度更包括解决问题的能力。婚姻不是爱情的终点而是另一种形式的开始。那些在恋爱中存在的问题不会因为结婚就自动消失反而会在婚姻中被放大。准备好再出发比匆忙上路要明智得多。", "career": "【工作状态】你正在经历职场上的合并重组。可能是公司合并部门整合或者你跟一个新团队的融合。在组织架构调整的敏感期请保护好自己的利益。那些看起来对所有人都公平的方案往往对最不主动的人最不利。不要指望别人会把利益送到你手上你需要主动去争取属于自己的那一份。\n\n【细节断语】归妹卦在职场的核心是正式绑定你和公司之间的合作关系需要明确的定位和条款。如果你的岗位职责和薪酬待遇不清晰现在是时候跟领导谈清楚了。在任何一段模糊的关系中受伤的永远是那个更在乎的人。在职场上做一个把规则搞清楚的人而不是一个等着别人来告诉你规则的人。\n\n【避坑指南】在组织整合时期最忌讳的就是站队。你不需要急于表态也不需要急于选边站。先观察一段时间看看形势的发展再做决定。那些在合并重组中第一个跳出来表态的人往往也是第一批被淘汰的人。保持冷静保持专业你的价值不在你的立场上而在你的能力上。"}, "4,3": {"name": "雷火丰", "classic": "<strong>雷火丰 · 卦辞精解</strong><br><br>雷电皆至丰也。丰盛饱满日中则昃。", "overall": "【现状剖析】你的人生正在沸腾。雷火丰卦雷火交加光明盛大你正处于一个全方位丰收的黄金时期。事业上有声有色社交圈里风生水起连你的气色都比以前好了不少。你走在路上的步伐都是轻快的因为你感受到了那种一切尽在掌握的痛快感。但丰卦最深刻的智慧是盛极必衰太阳升到最高处就会开始下落。你现在要做的不是继续往上爬而是学会在高处稳住。\n\n【体用天机】雷电交加光明盛大之象。你现在的人生就像一场盛大的宴会灯光灿烂音乐喧闹所有人都在为你鼓掌。但宴席总有散场的时候高潮过了就是回落。这不是诅咒而是规律。丰卦给你的建议是在最辉煌的时候为可能的衰落做好准备。那些在高处依然保持清醒的人才能在回落时依然从容。\n\n【变卦警示】丰卦的警示是日中则昃月盈则亏。你现在拥有的一切——财富地位名声——都不是永恒的。那些在盛世中不懂得居安思危的人在乱世来临时往往会措手不及。保住你现在拥有的一切把丰盛的能量转化为持久的价值。不要让你的辉煌只停留在这一瞬间。那些懂得在丰收季节储存粮食的人才能在冬天来临时依然温饱。", "wealth": "【财运趋势】你最近的财务状况可以用盆满钵满来形容。收入在大幅增长资产在快速增值就连你之前觉得遥遥无期的财务目标现在都在一个个实现。但赚得多花得也多的毛病你现在特别明显。你的消费欲望已经被赚钱快感带到了一个危险的水位。你现在不是在花钱而是在用一种近乎报复的方式补偿自己过去那些不敢花钱的日子。这种心态很危险因为它会让你失去对财务的控制。\n\n【细节断语】丰卦的财富策略是见好就收。既然已经赚到了就应该锁定利润而不是继续加码。你现在心态已经被成功的喜悦冲昏了头你觉得自己无所不能但这种感觉往往是灾难的开始。多少人在牛市最高点加杠杆结果一夜回到解放前？他们不是输给了市场而是输给了自己的贪婪。贪婪才是你财富路上最大的敌人。\n\n【避坑指南】盛世的财富最怕的不是赚不到而是守不住。你现在赚到的钱如果不能有效地转化为长期资产那它们就像沙漏里的沙子很快就会流走。制定一个明确的资产配置方案把大部分利润转移到低风险的安全资产中。牛市是用来卖的不是用来买的。同样的道理丰盛是用来守的不是用来造的。", "love": "【感情现状】你的感情生活目前轰轰烈烈充满了激情。单身的朋友你正在经历一段密集的桃花期有伴侣的你们最近像回到了热恋期。但请记住轰轰烈烈的感情也需要日常的细水长流来支撑。别让浓烈的浪漫掩盖了关系中需要磨合的实质问题。那些在热恋期被忽视的矛盾到了平淡期可能会被放大成一发不可收拾的危机。\n\n【桃花指引】丰卦期的感情就像一场盛大的烟火绚烂夺目但也转瞬即逝。如果你想维系一段长久的感情请注意在激情退去之后你们之间还剩下什么。是彼此的理解是共同的价值观是对未来的规划还是只剩下习惯和依赖？趁着感情还在高峰期的时候为平淡期做好准备和对方一起建立那些能够支撑长期关系的基石。\n\n【避坑指南】桃花运旺盛的时候最容易被外界诱惑所迷惑。你可能会同时对多个人产生好感或者在已有伴侣的情况下对别人心动。请保持清醒不是你遇到的每一个人都值得你投入感情那些让你心动的瞬间可能只是因为你处在感情的高峰期而不是因为那个人真的合适。在你的判断力受荷尔蒙影响的时候不做重大决定是一个明智的选择。", "career": "【工作状态】你的职场生涯正处在一个耀眼的高光时刻。你是公司的明星员工是团队的核心骨干是人人都想挖角的香饽饽。请珍惜这段高光期但也要开始为可能的衰退做好准备。在职场上没有永远的高峰也没有永远的低谷。你现在能做的就是利用好这段高光期尽可能多地积累资源建立关系提升能力为下一个阶段做好准备。\n\n【细节断语】丰卦在职场中的策略是利用好每一个机会。你现在处在最好的位置上有最大的话语权最多的资源最好的影响力。不要浪费这些优势推动你一直想做但没敢做的事情。趁着你现在能量满满为公司为团队创造最大的价值也是为自己创造最大的价值。你的价值不是你的职位给你的而是你创造的成果决定的。\n\n【避坑指南】盛极必衰是自然规律在职场上也一样。你现在要开始未雨绸缪了。把现在赚到的钱存起来把现在建立的人脉维护好把现在学到的技能巩固好。当风停下来的时候你还有动力继续飞翔而不是一头栽下来。那些在职场上起起落落的人最后能站住的不是因为运气而是因为他们在得意时没有忘记准备过冬的粮食。"}, "4,4": {"name": "震为雷", "classic": "<strong>震为雷 · 卦辞精解</strong><br><br>洊雷震也。惊变之时保持镇定。", "overall": "【现状剖析】你的人生刚刚经历了一场突如其来的地震。可能是你毫无防备地被分手了可能是你突然收到了裁员通知也可能是你的某个家人突发状况让你措手不及。不管发生了什么震卦要告诉你的第一句话是别慌。雷声虽然吓人但它总会过去你现在最需要做的就是深呼吸先让自己从惊恐状态中抽离出来。慌的时候不要做决定因为你慌的时候做的决定都会让你更慌。等你冷静下来了你会发现那些让你害怕的事情并没有你想象的那么可怕。\n\n【体用天机】双雷相叠震动不止你正处于一个连续震荡的时期。一个危机还没平息另一个危机又来了。你现在就像个惊弓之鸟对任何的风吹草动都过度反应。但请相信你的心理承受能力远比你想象的要大。那些你以为撑不过去的关头每一次你都撑过去了。这次也一样。你比你想象的要坚强得多只是你还没有意识到这一点。\n\n【变卦警示】震卦告诉你君子以恐惧修省——在恐惧中反省和成长。每一次震动都是一次自我审视的机会。那些把你震倒的东西正是你之前忽视的问题。借着这次震动把那些早就该清理的问题彻底翻出来解决掉。风暴过后的天空最清澈震荡过后的自己最清醒。每一次让你感到害怕的经历都是你变强的机会。", "wealth": "【财运趋势】你的财务正在经历一场地震。可能是一笔没有预料到的大额支出也可能是你的某个投资突然爆雷。在这种突发情况下你最容易犯的错误就是恐慌性操作——看到跌就卖听到风声就追。请冷静下来。这个时候你的任何操作都应该是理性的而不是情绪化的。所有的投资大师都会告诉你最不该在恐慌的时候做决定。\n\n【细节断语】震卦时期的财务策略是把损失控制在可承受的范围内。那些已经发生的损失就让它过去不要为了翻本而投入更多的本金。那些正在亏损的投资要重新评估它们的基本面是否发生了变化。如果你的投资逻辑已经不成立了那就要勇敢地止损。留得青山在不怕没柴烧。保住你的本金你才有翻盘的机会。\n\n【避坑指南】在财务震荡中最大的敌人不是市场而是你自己的恐惧。你可能会因为害怕损失而做出错误的买卖决策你可能因为恐慌而卖在了最低点。克服恐惧的最好方法是确保你所有的投资都在你的风险承受能力之内。在投资之前就做好最坏的打算提前设置好止盈点。当你把所有的情况都想到了你就不会有恐慌了。", "love": "【感情现状】你正在经历一场感情的地震。突然的争吵意外的分手或者一个让你措手不及的真相被揭开。你的第一反应可能是愤怒可能是不解也可能是深深的受伤。但震卦要告诉你的是那些经得起地震的关系才会变得更加牢固。借着这次震动把那些早就该清理的问题彻底翻出来解决掉。信任就像一面镜子碎了可以粘起来但永远有裂痕。那些裂痕提醒你们需要更小心地呵护这段关系。\n\n【桃花指引】震卦在感情中的启示是在危机中看清一个人。平时那些被甜言蜜语掩盖的东西在地震来临时会暴露无遗。一个人的真实人品不是在风平浪静的时候看出来的而是在惊涛骇浪中检验出来的。那些在危机中依然站在你身边的人才是真正值得你珍惜的人那些在危机中转身离开的人不值得你有任何的留恋。\n\n【避坑指南】感情的震荡也是一种成长的过程。你可能会很痛苦但你也会在这个过程中学会很多。你会更清楚自己要什么不要什么你会知道什么样的人值得托付什么样的人应该远离。每一段痛苦的经历都是一堂深刻的人生课。你付了学费就要学到东西不要让这些痛苦白费。经历过感情震荡的你下一次会更懂得什么叫选择什么叫珍惜。", "career": "【工作状态】你的职场刚刚经历了一场剧烈的地震。可能是公司突然宣布裁员你的直属领导毫无征兆地离职或者你被临时调到了一个完全陌生的岗位。请保持冷静至少给自己一周的时间来观察变化再做反应。在职场地震中你最好的保护伞是你的不可替代性。那些平时在公司里吃得开的人不是因为他们跟领导关系好而是因为他们有别人替代不了的技能。\n\n【细节断语】震卦时期的职场生存法则是保持镇定寻找机会。地震之后往往会有新的格局新的机会出现。那些在动荡中依然保持专业输出的人那些在混乱中还能提供稳定价值的人往往会成为新格局中的核心人物。危机中确实藏着机会但不是所有人都能在危机中看到机会。你需要的是在别人都慌的时候保持镇定在别人都乱的时候保持清醒。\n\n【避坑指南】在职场震荡中自保的另一个重要策略是维护好你的外部人脉和机会。现在就需要把你的简历更新一下跟你的同行和前同事保持联系了解一下外面的市场机会。即使你暂时不需要这些在危机来临时你也能从容应对。机会永远留给那些提前准备好的人你永远不知道你的那些准备什么时候会成为你的救命稻草。"}, "4,6": {"name": "雷水解", "classic": "<strong>雷水解 · 卦辞精解</strong><br><br>解利西南。解脱缓解困境消散。", "overall": "【现状剖析】你最近像是一口憋了很久的高压锅终于被掀开了盖子。之前那段时间你被各种破事缠得喘不过气来——工作上有人给你穿小鞋家里老人身体出状况就连你那个一向靠谱的合作者都在关键时刻掉了链子。但现在这些破事正在一件一件地自己找到出口你甚至不用怎么费劲困局就开始自动松动了。你就像在隧道里走了很久终于看到了出口的光亮。\n\n【体用天机】解卦上雷下水雷雨大作之后冲刷掉了一切污浊你的运势正在经历一场大扫除。那些一直堵在你心口的人和事会以你意想不到的方式得到解决——可能是那个难缠的客户突然松口了也可能是之前一直卡着你的审批突然通过了。总之你不用再像前两个月那样硬扛了。那些让你觉得天要塌下来的事情最后都会变成你笑谈中的一个小故事。\n\n【变卦警示】但是解卦最怕的就是好了伤疤忘了疼。问题解决了之后你要做的第一件事不是庆祝而是复盘。搞清楚这次到底是怎么把自己逼到那个境地的下一次才能提前绕开。不然同样的坑你会以不同的姿势再摔一次。错误本身不可怕可怕的是你犯了同样的错误还不自知。在你的手机备忘录里记下来这一次教训提醒自己下次不要再犯。", "wealth": "【财运趋势】你的财务状况正在经历一场迟来的春雨。之前被拖欠的那笔款项终于有了动静对方已经松口了近两周内应该能到账。如果你正在做某个投资项目之前半死不活的状态也会开始出现转机。解卦的财路逻辑是疏通——之前堵住你财路的那块石头正在被人搬开。以前赚不到的钱现在开始能赚到了以前通不了的路现在开始通了。\n\n【细节断语】但是你不要因为压力刚缓解就开始报复性消费。很多人犯的致命错误就是手头刚宽裕一点就立刻想着换车换包换手机。你现在最该做的是趁着这股东风把之前欠下的信用卡账单和人情债一次性清理干净。轻装上阵才能跑得更远背着过去的包袱你什么也做不好。把所有的债务清了剩下的钱才是你真正拥有的自由。\n\n【避坑指南】解卦之后不要立刻做大规模的投资。你的判断力刚从焦虑中恢复过来还没有完全清醒。至少给自己两周的冷静期让理智彻底回归之后再动你的大额资金。那些因为刚喘过气来就急着想赚更多钱的人最后往往会重新陷入困境。让你的钱包先喘口气让你的判断力先恢复一下再来考虑投资的事。", "love": "【感情现状】不要再看表面风平浪静了。你和对方之间其实已经有一层看不见的隔阂堵在那里很久了之前的某次争吵或冷战虽然过去了但彼此心里都留下了疙瘩。你最近常常在深夜一个人胡思乱想翻看过去的聊天记录甚至在想这段关系到底值不值得。好在当前磁场在转机中对方的心态已经开始软化了主动沟通的契机就在眼前别再憋着跟自己较劲了。有时候只需要你主动迈出一步僵局就会像春天的冰雪一样自然消融。\n\n【桃花指引】如果你是单身这个卦在狠狠地敲醒你。你之所以一直遇不到合适的人根本不是因为你不够好而是你把自己的心门锁得死死的。你还在拿前任犯的错来惩罚未来可能会对你好的人或者因为害怕再次受伤而在感情里极度被动。变卦带喜意味着接下来两周内你身边会出现一个让你眼前一亮的人可能是通过老朋友聚会或是职场合作认识的他身上那种轻松自然的气场正是你最近最缺的。\n\n【避坑指南】很多事情不是靠等和耗就能自动解决的。你最近最大的误区就是习惯性逃避总想着顺其自然吧该来的总会来。这种心态只会把原本能和解的机会白白熬死。收起你那毫无意义的傲娇和面子把之前那些没谈开的矛盾找个气氛轻松的下午一次性摊开说明白。真正和解的前提是允许彼此把心里的烂摊子彻底翻出来洗干净。晾一晾晒一晒那些一直放在心里发霉的问题才能重新变得干净。", "career": "【工作状态】你最近在职场上的感觉就像憋了好久的雨终于下了下来——之前那段时间你被各种破事折磨得心力交瘁项目推进不动跨部门协作永远在扯皮就连你那个平常好说话的甲方都开始无理取闹。但现在这些卡点正在一个一个自己松动你不用再像之前那样硬着头皮去推了。那些之前你觉得过不去的坎现在回头看其实也就是那么回事。\n\n【细节断语】解卦时期你在职场中最该做的不是冲锋陷阵而是清扫战场。把之前因为太忙而积压下来的邮件回了把拖了两周的报销单交了把那个一直没来得及做的复盘报告写完。把这些鸡毛蒜皮的小事清干净之后你会发现自己的工作效率直接翻倍。有时候效率提升的秘诀不是做更多的事而是把那些还没做完的事赶紧收尾。\n\n【避坑指南】问题解决了之后别急着去邀功。你领导现在最烦的就是别人在他面前表功。默默把事儿办妥了把结果放到他桌上比你在会议上说十句漂亮话都管用。那些在问题解决后第一时间抢功的人往往会成为领导心中的减分项而那些不声不响把事做好的人才是领导心中真正值得提拔的人。让结果替你说话比你自己说话有力量得多。"}, "4,7": {"name": "雷山小过", "classic": "<strong>雷山小过 · 卦辞精解</strong><br><br>山上有雷小过也。小有过度宜谦宜慎。", "overall": "【现状剖析】你最近有点用力过猛了。雷山小过卦雷在山上声音传不远你做大事的力量还不够但做小事又绰绰有余。你现在的策略应该是聚焦小事——把你手头那件你觉得不起眼的工作做到极致比你整天盯着那个大目标有用得多。那些看起来不起眼的小事正是构成你未来的基石。你最近是不是在某件事上投入了超出正常比例的精力？是时候收一收了。有的放矢比乱撒网要有用得多。\n\n【体用天机】小过卦告诉你做事的分寸感很重要。不是所有的事情都值得全力以赴也不是所有的关系都值得掏心掏肺。学会分配你的精力把对的精力放在对的事情上。那些耗费你大量精力却收效甚微的事情要果断放弃。能量守恒定律在生活中也是有效的你的精力放在哪里哪里就会开花结果。问题是你要确保那些花结的果是你想要的。\n\n【变卦警示】小过卦的警示是不要在小事上犯大错。你最近有没有因为注意力不集中而犯一些低级错误？那些你平时都不会犯的错最近接二连三地发生？这不是你能力退化了而是你的精力被分散了。请把你的注意力重新集中起来不要让你的粗心大意毁了你的大好局面。很多大厦的崩塌不是因为没有地基而是因为一个小小的螺丝钉松了。", "wealth": "【财运趋势】小财可求大财难得。你最近想靠某个项目一夜暴富的幻想可以打住了。雷山小过时期的财运逻辑是积少成多——赚小钱没问题但别指望一笔生意就改变人生。控制你的消费欲望不要超前消费不要透支信用卡。那些靠借贷来维持高消费的人最后都会为自己的虚荣心付出惨重的代价。钱是赚出来的也是省出来的只会赚不会省的人永远富不起来。\n\n【细节断语】在这个阶段的财务策略是稳扎稳打慢就是快。不要追求高回报也不要相信任何让你快速致富的故事。那些承诺让你在短时间内翻倍的所谓机会大概率是骗局。你以为你看到的是机会其实你看到的是诱惑。真正的机会从来不需要用夸张的承诺来包装。那些靠谱的投资机会往往是那些看起来不起眼但长期稳健的。\n\n【避坑指南】小过卦时期的避坑指南是不要贪图小便宜。那些看似划算的买卖免费的礼物打折的商品往往在别的地方等你把坑填上。你算得过商家吗？你的人生阅历比那些专业的营销人员丰富吗？如果你没有把握那就要警惕一切看起来性价比超高的东西。一分钱一分货这个道理永远不过时。", "love": "【感情现状】感情里最近特别容易因为一句话一件小事闹大。你最近是不是特别敏感？对方随便说了一句什么你就在心里给它加了一百层戏。请放宽心不是每件事都值得上升到你不在乎我的高度。感情中最怕的就是过度解读。对方可能只是今天太累了所以回消息慢了你可能只是今天心情不太好所以说话冲了点。不要把偶然的事件当成必然的结果。\n\n【桃花指引】小过卦在感情中提醒你不要在细节上纠缠太多。那些鸡毛蒜皮的小事那些无关紧要的细节那些不经意的疏忽都不是衡量感情的标准。真正重要的是大方向——你们是否朝着共同的目标前进你们是否愿意为彼此付出和改变。在那些小事上睁一只眼闭一只眼保持大气的态度你们的感情会轻松很多。\n\n【避坑指南】有伴侣的人最近要学会控制自己的情绪。你的情绪波动可能会影响你们的感情质量。当你觉得自己快要爆发的时候试着告诉自己这值得吗？如果答案是否定的那就深呼吸三次把到嘴边的话咽回去。那些因为你一时冲动而说出口的伤人的话即使事后道歉了也会在对方心里留下一个疤痕。嘴上留德才能心里有爱。", "career": "【工作状态】职场上的策略是做好小事不要好高骛远。你现在不需要做任何大事把你手头那件你觉得无聊的工作做到无人能及的程度就是你最大的价值。不要在这个阶段向领导提出大的改革方案先把分内的事做漂亮了再说。那些连本职工作都做不好的人整天想着推动公司变革这样的建议不仅不会被采纳只会让人觉得你不靠谱。\n\n【细节断语】小过卦时期的职业建议是精益求精。把你手头的工作做得比任何人都好比任何人的期望都高。那些在小事上追求极致的人往往能在大事上获得机会。因为你的领导通过你对待小事的态度看到了你对待大事的潜质。把小事情做好这是你在职场上建立信任最有效的方式。一个能在小事情上让人放心的员工才有机会被委以更大的责任。\n\n【避坑指南】稳住现在是你在职场上最重要的任务。不要做任何激进的举动也不要试图改变现有的格局。保持你的产出保持你的节奏保持你的靠谱。那些在职场上稳步上升的人不是因为他们做了什么惊天动地的大事而是因为他们把自己分内的每一件小事都做到了极致。这就是小过卦对你的职场建议积累小胜为大胜。"}, "5,3": {"name": "风火家人", "classic": "<strong>风火家人 · 卦辞精解</strong><br><br>风自火出家人也。家庭亲情温暖和睦。", "overall": "【现状剖析】你最近的心思应该往家里收一收了。风火家人卦风自火出温暖和睦你现在的重心不在外面的应酬和社交上而在你最亲近的人身上。你最近是不是把太多时间花在无关紧要的社交上了？那些酒桌上的朋友有几个是真心对你的？把你宝贵的时间留给真正在乎你的人。那些外面看起来风光无限的社交圈子其实远不如家里的一顿饭来得实在。温暖从内而生不是从外而来的。\n\n【体用天机】风自火出温暖和睦之象。你现在最需要的不是外界的认可而是家人的支持。那些在外面拼搏的人往往忽视了一个最简单的事实——没有家人支持的成功是孤独的没有家人分享的财富是空虚的。把多一些的时间和精力投入到家庭用你的温暖照亮你最亲近的人。一家人围坐在一起吃顿饭聊聊天分享一下各自的喜怒哀乐这就是生活中最朴实的幸福。\n\n【变卦警示】家人卦也提醒你不要把外面的情绪带回家。你在外面受的气遇到的不顺心不应该发泄到最亲近的人身上。家是一个讲爱的地方不是你情绪垃圾桶。学会在工作回家之前就处理好自己的负面情绪把最好的一面留给最亲的人。那些在外面受了气回家拿家人出气的人是最没出息的人。", "wealth": "【财运趋势】你的财运最近出现了家庭化的趋势。你可能正在从事跟家庭相关的生意——家族企业的业务在家办公的自由职业或者通过家人的介绍获得的资源。请珍惜这些跟家庭相关的财富机会因为基于信任的合作往往会比纯粹的利益合作更稳固。但也要注意不要让家庭关系因为金钱而产生裂痕。\n\n【细节断语】家人卦的财富逻辑是基于信任的稳健投资。你最近适合做那些风险低回报稳定的投资不适合冒险追逐高收益。那些需要大量冒险的投机行为会让你的家庭关系变得紧张。让你的财务策略和家庭需求保持一致在投资之前想一想这笔钱如果亏损了会不会影响到你的家庭生活。如果会有影响那就不要投。\n\n【避坑指南】在家庭和金钱的关系中最重要的原则是不要因为钱伤了感情。不管你是跟家人合伙做生意还是借钱给亲戚都要在开始之前就把规则说清楚。那些因为不好意思说而模糊处理的金钱问题最后往往会造成比金钱更大的感情伤害。亲兄弟明算账这句话是千百年来最朴素的智慧。把账算清楚了感情才能长久。", "love": "【感情现状】你最近的缘分可能来自于家庭或家人的介绍。那些你之前排斥的相亲其实可能藏着你真正的缘分。不要因为觉得相亲老土就拒绝试着去接触一下那些真正关心你的人在条件允许的范围内多给你身边的人和机会一次机会吧。有时候对的人不是在你最期待的时候出现的而是在你最不经意的时候通过你最意想不到的方式出现的。\n\n【桃花指引】家人卦在感情中的核心是找一个能给你家庭感的人。那些外表光鲜条件优越的人不一定能给你温暖的家但一个愿意为你做饭愿意陪你聊天愿意在你生病时照顾你的人一定能。在选择伴侣的时候请把对方能不能给你家的感觉作为一个非常重要的标准。那些在恋爱时轰轰烈烈但到了生活中什么都不会的人可能只适合谈恋爱不适合过日子。\n\n【避坑指南】有伴侣的人你们近期适合把精力放在家庭建设上。一起做饭一起打扫一起规划周末的活动。在这些看似平淡的家庭事务中彼此的感情会在不知不觉中加深。浪漫不是只有在高级餐厅里才有在家里为对方做一顿饭可能比任何烛光晚餐都更能打动人心。", "career": "【工作状态】你现在的工作环境就像一个大家庭。同事之间关系融洽配合默契这种氛围非常适合团队协作。作为管理者你现在关注团队氛围比抓业务业绩更重要。营造一个让每个人都感到温暖被尊重的环境。员工在这样的环境中会主动为你创造超额的价值。一个好的管理者不是那个最严厉的人而是那个最让人愿意跟随的人。\n\n【细节断语】家人卦在职场的核心是团队文化建设。你要在团队中倡导家人般的互助和信任氛围。当你的团队像一个温暖的大家庭时每一个成员都会愿意为这个家付出更多。那些只会用规章制度来管理团队的人永远不懂为什么有的团队能创造奇迹。那些看起来有些过时的温暖和关怀反而是最能激发团队力量的方式。\n\n【避坑指南】在职场上也要注意不要把工作和家庭的角色混淆。你可以在团队中营造家庭般的温暖但你不能要求同事像家人一样包容你的一切。工作中的关系始终需要建立在专业和尊重的基础之上。用温情代替冷漠用关心代替挑剔但也要保持清晰的边界感。一个好领导像一个好家长既有爱也有规矩。"}, "5,4": {"name": "风雷益", "classic": "<strong>风雷益 · 卦辞精解</strong><br><br>风雷益也。增益共赢利人利己。", "overall": "【现状剖析】你现在正处在一个做什么都顺的多赢局面里。风雷益卦风雷激荡相得益彰你最近的所有行动都在产生连锁式的正面效应——你帮了别人一个忙这个人又介绍了另一个机会给你你做成了一个项目这个项目的成功又引来了更多的合作邀约。这种良性循环正在让你的资源和影响力成倍增长。你现在做的每一件好事都会以放大十倍的效果回到你身上。你的好运不是凭空来的而是你过去的付出在以几何倍数回报你。\n\n【体用天机】益卦的核心是兼济天下。你现在的状态和实力已经超过了独善其身的阶段你可以去帮助更多的人了。这不是一种道德要求而是一种战略选择。在你帮助别人的过程中你会获得更多的资源更多的连接更多的影响力。那些你帮助过的人会成为你最忠实的支持者也会在你需要的时候伸出援手。你付出的每一份善意都是在为你的未来投资回报率远超任何理财产品。\n\n【变卦警示】益卦也提醒你帮助别人要有智慧。不是所有的帮助都有价值也不是所有的人都值得你帮。学会把你的精力放在那些真正需要你帮助并且值得你帮助的人身上。那些以德报怨的人确实值得敬佩但你没有必要为了满足所有人的期待而透支自己。善良需要智慧支持否则你的善良只是在喂养别人的懒惰和贪婪。", "wealth": "【财运趋势】你的财运目前正处于一个让人眼红的快速增长期。投资有回报合作赚大钱副业收入也在蹭蹭往上涨。益卦时期你的赚钱秘诀就是多行动——你每打一个电话每见一个人每做一件事都可能顺便赚到钱。那些以前你觉得不会带来收入的事情现在都在以你意想不到的方式变现。你的努力正在被这个市场成倍地回报。你的每一分付出都在产生复利效应。\n\n【细节断语】益卦的财富策略是互利共赢。你现在赚钱的方式不应该是我赢你输而是我们大家一起赢。懂得分享利益的人才能获得更多的利益懂得成全别人的人才能获得更多的成长。那些在合作中斤斤计较的人最后往往什么也得不到而那些大气的人反而越赚越多。因为你越是大方你的格局就越大你的格局越大你能承载的财富就越多。\n\n【避坑指南】在财富快速增长时期要注意保持清醒。你最近赚钱太顺了容易产生错觉以为自己做什么都能赚钱。其实大环境的利好因素占了很大的比重。等到潮水退去的时候你才能看到谁在裸泳。所以在赚钱的时候就要为不赚钱的时候做好打算。把一部分利润锁定起来降低你的财务杠杆率。那些在高歌猛进时不知道收敛的人最后往往在低潮期摔得最惨。", "love": "【感情现状】你最近遇到的那个人跟你有种说不清的成长共振。你们在一起的时候不是为了消磨时间而是为了互相激励彼此成为更好的人。这种关系非常难得请好好珍惜。好的感情不是你在我身边陪着我无聊而是你在我身边我们一起变成更好的人。这种共同成长的感觉会让你们的关系持续地有新鲜感和成就感。\n\n【桃花指引】益卦在感情中的逻辑是双向增益。一段健康的感情应该是彼此都变得更好而不是一方付出另一方索取。如果你在这段关系里一直在成长而对方一直在原地踏步甚至退步那这段关系可能并不适合你。好的爱情不是你降低了你的标准去迁就对方而是你们互相激励互相提升互相成就。你们的感情让彼此都成为更好的自己。\n\n【避坑指南】单身的朋友你最近容易在学习和成长类的场合遇到那个对的人——培训班读书会行业论坛。因为你现在重视的是成长你也会吸引那些重视成长的人。同频的人会互相吸引。你在哪个层次就会遇到哪个层次的人。所以你想遇到优秀的人最好的方法是先让自己变得优秀。否则就算遇到了你也留不住。", "career": "【工作状态】你在职场中正处于一个被全面认可的上升期。升职加薪项目成功合作愉快你想要的都在来的路上。但请管理好自己的时间和精力不要什么项目都接。学会做减法把精力集中在你最擅长最有价值的领域。那些什么都想做的人最后往往什么都做不好而那些专注在一个领域深耕的人最后都成了专家。你不需要在每一个领域都做得好你只需要在一个领域里做到极致就够了。\n\n【细节断语】益卦在职场中的策略是借力使力。你现在不需要所有事情都亲力亲为。学会借团队的力借平台的力借合作伙伴的力。你一个人能做的事情是有上限的但你能撬动的资源是无限的。善于借力的人才是职场上真正的聪明人。那些所有事情都自己做的人不是勤奋而是不懂得把自己的价值最大化。你的时间应该花在最能产生价值的事情上其他的事情交给别人。\n\n【避坑指南】在上升期最重要的不是速度而是方向。你现在的选择比努力更重要。你的时间和精力都是有限的你不可能在所有方向上都成功。选择那个最符合你长期职业规划的方向然后全力以赴。那些在选择了错误方向后快速奔跑的人最后只会更快地到达错误的地方。在出发之前先确认你的目的地是对的。"}, "6,1": {"name": "水天需", "classic": "<strong>水天需 · 卦辞精解</strong><br><br>云上于天需也。等待时机耐心为上。", "overall": "【现状剖析】你现在最需要的就是等待。水天需卦云在天上待时降雨你现在的所有努力都像是在跟老天爷较劲。你催了客户八百遍对方就是不回消息你面试了好几家公司对方就是不给你答复你追了一个人很久对方就是不表态。这不是你不够努力而是时机还没到。该来的总会来你只需要保持耐心。你现在的焦虑不会让事情变得更好只会让你的状态变得更差。\n\n【体用天机】需卦的核心是积累和等待的智慧。云朵需要积聚到足够的量才会下雨种子需要在土壤里积蓄足够的力量才会发芽。你现在也需要时间来完成这个积累的过程。不是在浪费时间而是在为更好的爆发做准备。那些在等待中变得焦躁的人往往会因为没有耐心而做出错误的决定而那些在等待中依然保持从容的人才能在最恰当的时机抓住机会。\n\n【变卦警示】需卦也提醒你等待不是被动地坐着什么都不做。在等待的过程中你可以做很多事情来提升自己——学习新技能拓展人脉了解一下市场的走向。当机会来临时你才能一把抓住它。等待是一门艺术。同样是在等待有的人等来了机会有的人等来了失望。区别在于在为机会做准备方面投入的精力。", "wealth": "【财运趋势】你手里那笔资金或者那个投资计划现在还不是出手的时候。市场的时机还没成熟你的条件还没准备好现在出手大概率会亏损。继续等待不是在消极以待而是在积蓄力量。那些在行情不好的时候强行入市的人最后大部分都成了别人离场的垫脚石。你不需要做第一个吃螃蟹的人你只需要做那个在时机成熟时果断出手的人。\n\n【细节断语】需卦的财务策略是在等待中积累弹药。你现在要保持充足的现金流多学习提升自己的投资能力等到机会来了的时候你才有足够的实力去抓住它。那些在机会来临时因为没有准备好而眼睁睁看着机会溜走的人最后留下的只有遗憾。准备要充分行动要果断。现在还没有到行动的阶段现在是你准备的阶段。\n\n【避坑指南】在等待的时候管住你的手是最重要的。你现在最容易犯的错误就是因为焦虑而做出一些不理智的财务决定。比如看到别人赚钱了就眼红忍不住跟着投了结果别人在赚的时候你在追高别人在撤的时候你被套在了山顶。那些因为害怕错过而冲动入市的人最后都会成为市场的韭菜。管住你的手管住你的钱等到属于你的时机到来。", "love": "【感情现状】属于你的那个人还在路上。你不是不够好也不是不够主动而是命运还没把你们安排到同一个时空里。在等待的过程中请你把自己变得更好。等那个人出现的时候你才能以最好的状态迎接。那些在孤独中浑浑噩噩度过的人最后遇到的人也往往好不到哪去。你现在对待自己的方式决定了未来那个人的质量。\n\n【桃花指引】需卦在感情中的智慧是宁缺毋滥。你不需要为了摆脱孤独而随便找一个人在一起。低质量的恋爱不如高质量的独处。在遇到那个对的人之前先学会享受一个人生活。一个能把自己生活过得精彩的人才有能力把两个人的生活也过得精彩。那些害怕孤独而匆忙进入一段关系的人最后往往会感到更加孤独。好的感情值得等待。\n\n【避坑指南】单身的你在等待的过程中请管理好自己的情绪。那些因为等待而产生的焦虑和不耐烦可能会让你做出不理智的选择。比如你可能会因为对方条件还不错就忽略了三观不合的问题或者因为家里催婚就在还没有准备好的情况下进入了婚姻。请记住你等得起不是因为你有大把时间可以浪费而是因为你值得更好的。", "career": "【工作状态】你可能在等一个晋升或者跳槽的机会但现在还不是最好的时机。不要让焦虑驱使自己做出错误的决定。利用这段时间学习新技能拓展人脉等到机会来临时你才能一把抓住它。那些在职场上等不起的人往往会因为一时的冲动而做出让自己后悔的决定比如裸辞比如接受一个低于自己价值的offer。沉住气等风来。\n\n【细节断语】需卦时期的职场策略是磨刀不误砍柴工。你现在做的一切准备工作学习提升人脉拓展都不是浪费时间而是在为你未来的跃升积蓄能量。等到机会来临时你会发现自己已经准备好了。那些平时不烧香临时抱佛脚的人运气不会一直眷顾他们。机会是留给那些时刻准备着的人的。\n\n【避坑指南】在等待的过程中不要让他人的节奏影响你自己的步伐。看到身边的同事跳槽涨薪了看到同龄人升职了你的心里可能会很着急。但每个人都有自己的节奏。你的时机还没有到不代表永远不会到来。保持你自己的节奏做最好的自己你的时机到了自然一切都会水到渠成。比较是偷走幸福的小偷专注于自己的成长。"}, "6,5": {"name": "水风井", "classic": "<strong>水风井 · 卦辞精解</strong><br><br>木上有水井也。稳定根基深挖价值。", "overall": "【现状剖析】你现在手里其实有一口很值的井。水风井卦木上有水井养万物这口井可能是你现有的稳定工作是你掌握的某项核心技能也可能是你经营多年的人际关系网络。你最近是不是觉得自己拥有的东西不够好太平凡太无聊了？你想放弃这口井去找一片更好的水源。但井卦告诉你改邑不改井你现有的根基比你想象的值钱得多。你眼中的平凡可能是别人梦寐以求的奢侈品。在你决定放弃之前先想想你真的了解它的价值吗？\n\n【体用天机】木上有水井养万物之象。井卦的核心智慧是深耕你的现有资源。你不需要不断地寻找新的水源你只需要把你现在的这口井挖得更深。那些在一个领域深耕了十年的人和一个不断换方向的人谁的积累更有价值？答案不言而喻。深挖一口井才能喝到最甘甜的水。那些到处挖井但没有一口挖深的人永远也喝不到地下水。\n\n【变卦警示】井卦也提醒你井水需要定期淘洗才能保持清澈。你现有的技能和人脉也需要持续地维护和更新。不要以为有了固定的工作就不需要学习新的技能了。那些吃老本的人总有一天会把老本吃完。在这个快速变化的时代最好的稳定不是一份稳定的工作而是你持续进化的能力。不要让你的技能生锈。定期给你的能力做一次更新换代。", "wealth": "【财运趋势】你的主要收入来源是稳定的。井卦时期的财富逻辑是深挖一口井——把你现有的技能或业务做到极致比四处寻找新机会更明智。你已经在某个领域有了根基深耕下去比换方向更有价值。那些在一个领域里做到专家水平的人最后的收入往往远高于那些什么都会一点但什么都不精通的人。你不需要什么都会你只需要把一件事做到最好。\n\n【细节断语】井卦的财富策略是持续稳定的收入加上适当的副业。你的主业是那口稳定的井你的副业是井水之外的雨水。两者结合你的财务状况就会稳健又有弹性。但要注意的是你的副业不能影响你的主业质量。在你现有的那口井里继续深耕不要因为看到外面的世界精彩就分心。那些好高骛远的人最后往往连自己的那口井都保不住。\n\n【避坑指南】井卦的财富陷阱是坐吃山空。稳定不代表永远安全。在稳定的同时也要居安思危保持你的竞争力不断学习新的技能适应市场的变化。当你那口井因为环境变化而干涸的时候你还有能力去挖另一口井。稳定不等于永远稳定真正的稳定是你的能力让你在任何环境下都能找到新的机会。", "love": "【感情现状】你跟某人的关系虽然看起来平淡但它是稳定的经过了时间考验的。井卦告诉你稳定本身就是一种幸福。不要因为觉得平淡就去追求所谓的刺激那些表面的绚烂往往经不起风雨。那些朋友圈里秀恩爱的未必比你们过得好那些天天在酒吧里狂欢的人未必比你快乐。珍惜你拥有的平淡因为平淡才是最真实的幸福。\n\n【桃花指引】井卦在感情中的启示是日久见人心。一段长久稳定的关系不是建立在轰轰烈烈的浪漫基础上的而是建立在日复一日的相互关心和陪伴中的。那些在你身边默默陪伴了很久的人比那些突然出现就对你热情似火的人更值得你信任。激情会消退但真心不会。时间是检验感情最好的标准。\n\n【避坑指南】有伴侣的人不要把对方的陪伴当成理所当然。你对这份稳定的关系给予了足够的维护和珍惜吗？定期给你们的感情加点新鲜的元素——一起尝试新的事物一起去没去过的地方一起为同一个目标努力。井水需要定期淘洗才能保持清澈感情也需要定期维护才能保持新鲜。那些你以为稳定的关系可能在你忽视它的时候悄悄地变质了。", "career": "【工作状态】井卦给职场人的建议非常明确在现有岗位上深耕比频繁跳槽更明智。你已经在现在的领域积累了宝贵的经验和人脉这些都是你的无形资产。不要因为一时的不满足就轻易放弃。你现有的公司可能给你提供了一些看不见的价值——稳定的收入弹性的工作时间熟悉的团队良好的氛围这些都是你未来可能在其他地方找不到的。在你决定离开之前先盘点一下你在这家公司到底收获了什么。\n\n【细节断语】井卦的职业策略是成为你所在领域的专家。你的目标不应该是不断换公司和换岗位而应该是在你现有的岗位上不断深入成为这个领域的专家。那些在一个领域深耕十年的人和每年换一个方向的人最后的职业高度是完全不一样的。深度决定了你的价值广度可以为你打开新的门但深度才能让你在一扇门里走得更远。\n\n【避坑指南】在深挖一口井的同时也不要完全切断与外界的联系。保持你的职业网络了解你所在行业的发展趋势定期更新你的简历和作品集。你要确保自己不是因为依赖现在的舒适区而不敢走出去而是你真的觉得现在是适合留在这里深耕的时期。区分留在一家公司的原因是能力离不开还是习惯离不开决定了你未来的职业选择是明智的还是懦弱的。"}, "6,6": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "6,7": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "6,8": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,1": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,2": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,3": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,4": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,5": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,6": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,7": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "7,8": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,1": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,2": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,3": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,4": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,5": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,6": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,7": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "8,8": {"name": "卦象", "classic": "<strong>卦象 · 卦辞精解</strong><br><br>此卦蕴含天机请结合当下心境静心体悟。", "overall": "【现状剖析】你现在正处在人生的一段关键时期。所有的经历都在告诉你需要静下心来审视自己的内心和周围的环境。那些看似无关的事情其实都在你看不见的地方紧密相连。\n\n【体用天机】当前的能量场充满变数与可能。你不需要急于求成也不需要恐惧变化。保持内心的平静和开放的态度的时机自然会带你走向属于你的方向。\n\n【变卦警示】在变化中保持你的原则和底线。不要让外界的喧嚣影响你内心的判断更不要因为一时的得失而改变你长期的方向。稳住你的舵风浪总会过去。", "wealth": "【财运趋势】你的财务状况正在经历一个调整期。收入可能会有波动支出也有可能增加但这些都是正常的周期现象。不要因为短期的波动而做出长期的决定。\n\n【细节断语】在财务决策上给自己留足余地。不要把所有资金投入单个项目也不要因为一时冲动而买入或卖出。保持现金流保持耐心。\n\n【避坑指南】不要在这个阶段相信任何承诺高回报的投资机会。那些看起来很美的馅饼背后往往藏着你看不见的风险。保护你的本金就是保护你的未来。", "love": "【感情现状】你的感情生活正在经历一段沉淀期。那些表面的喧嚣褪去之后你才能在平静中看清内心的真实需求。不要因为孤独而匆忙选择也不要因为害怕而放弃可能的机会。\n\n【桃花指引】在遇到那个对的人之前先把自己变成对的人。你的状态决定了你会吸引什么样的人。提升自己开放心态缘分会在你最不经意的时候出现。\n\n【避坑指南】感情中最怕的不是等待而是将就。不要因为年龄压力或外界眼光而接受一段不适合你的关系。真正值得的感情值得你耐心等待。", "career": "【工作状态】你的职业生涯正处于一个关键的节点。你需要在这个时期做出一些重要的选择。那些选择会决定你未来几年的发展方向请慎重考虑。\n\n【细节断语】在职场上保持学习和进步的状态。不要满足于现有的成就也不要因为暂时的挫折而否定自己。持续提升你的能力机会总会出现。\n\n【避坑指南】不要在这个阶段做激进的职业变动。跳槽转行或创业都需要充分的准备和时机。在没有看清形势之前保持稳定做好你手头的工作。"}, "4,5": {"name": "雷风恒", "classic": "<strong>雷风恒 · 卦辞精解</strong><br><br>雷风相与恒也。持之以恒坚守之道。", "overall": "【现状剖析】你现在正卡在一个让人进退两难的瓶颈期。生活看起来风平浪静但你的内心波澜不止。工作稳定感情稳定收入稳定但这种稳定正在变成一种慢性窒息。你每天早上醒来不用想就知道今天会发生什么——同样的路线同样的工位同样的外卖同样的刷手机到深夜。你心里很清楚这不是你想要的生活但你又不敢打破现状因为你不知道打破之后拿什么来兜底。最大的痛苦不是你过得不好而是你知道你可以过得更好但你不敢去要。\n\n【体用天机】恒卦上雷下风雷风相随你身边其实有人在默默关注着你的处境。那个平时不怎么说话但关键时刻总能给你建议的朋友那个在公司一直暗暗照顾你的前辈他们都看出了你的挣扎。你并不是一个人在扛着这种迷茫只是你还没学会开口求助。体用比和告诉你的核心信息是你担心的事情有人在帮你兜底只是你不知道而已。\n\n【变卦警示】但恒卦最大的陷阱就是你正在经历的舒适区幻觉。这种平淡不是幸福而是你对现状的麻木。你是不是开始暴饮暴食了？是不是开始熬夜刷手机到凌晨三点了？这些都在提醒你你的内心已经压抑到了极限身体和情绪都在用极端的方式向你求救。请你正视这些信号不要等到彻底崩溃了才后悔。那些所有突然崩溃的人都不是一瞬间倒下的而是默默承受了很久。", "wealth": "【财运趋势】你的财务状况目前处于一个让人焦虑的稳定贫穷状态。收入不算低但也不高每个月工资到账之后还完房贷车贷信用卡剩下的钱刚好够你小心翼翼地活着。你不是赚不到钱而是你的赚钱模式太单一了——你所有的收入都来自于固定工资。恒卦的巽木和震木都代表技能型收入说明你其实有可以变现的手艺只是你一直懒得去开发它。那些在下班后还坚持学习新技能的人最后都拥有了多条收入管道。\n\n【细节断语】最近两个月内要警惕一笔面子消费——可能是朋友婚宴的随礼可能是同事离职聚餐凑份子也可能是你为了撑场面而买的一件根本不需要的衣服。这些单笔看似不大的开销正在像蚂蚁搬家一样掏空你的积蓄。请你去翻一下过去三个月的支付宝账单你会被那些你以为没花多少的小钱总数吓一跳。那些无意识的小额消费正在一点一点地侵蚀你的财务安全。\n\n【避坑指南】你的收支结构已经非常接近临界点了。你的应急储备金至少要覆盖三个月的生活费如果现在还没有请你从本月开始强制储蓄。哪怕每个月只存五百块有和没有是天壤之别。那些每月固定存钱的人和那些每月月光的人在三年后的财务状况天差地别。这就是复利的魔力也是在财务上自律和放任自流的差距。", "love": "【感情现状】你们现在的感情状态就跟你每天吃的外卖一样——不难吃但也谈不上享受。有伴侣的你仔细想想你们上一次认真约会是什么时候？上一次没有看手机地好好聊天是什么时候？上一次真正意义上的拥抱又是什么时候？你们的关系已经变成了一种惯性不是因为爱而在一起而是因为习惯了而在一起。这不是否定你们感情的价值而是在提醒你再好的感情不经营也会慢慢枯萎。植物的生长需要阳光和水感情也需要关注和用心。\n\n【桃花指引】如果你是单身恒卦告诉你的第一句话是你最近的状态太紧绷了。你总是带着我必须要脱单的任务感去参加每一场社交活动脸上的表情写着我在找对象四个大字。这种急切的心态反而把桃花都吓跑了。你身边合适的桃花更多来自于朋友介绍和同学聚会这些熟悉的场合对方可能不是那种一眼惊艳的类型但相处起来会让你觉得特别舒服。舒服才是长期关系中最重要的品质。\n\n【避坑指南】不要用都在一起这么久了来绑架自己。如果你在这段关系中已经持续感到压抑超过半年请认真考虑是否需要做出改变。惯性不是爱情习惯不等于离不开。勇敢面对真相虽然痛苦但比在温水里被慢慢煮死要好得多。你值得拥有一段让你每天早上醒来都觉得幸福的关系而不是一段让你每天都在忍受煎熬的关系。", "career": "【工作状态】你现在正在经历职场里最折磨人的一个阶段——你很清楚自己不该待在这里了但你不知道自己下一步该往哪走。每天早上去上班的路上你都在做心理建设坐到工位上之后第一件事就是叹气。你的能力其实已经远超现在这份工作的要求了但你一直被某种安全感绑在这个位置上不敢动。你害怕的不是留下来而是害怕离开之后发现外面的世界更糟糕。\n\n【细节断语】最近你在职场中最大的危险信号是你开始频繁地在工作中出错。那些你以前闭着眼睛都不会犯的低级错误最近接二连三地出现。这不是你能力退化了而是你的潜意识在用这种方式逼你做出改变。你的身体比你更清楚你不适合留在这里它正在用犯错来加速你的离开。那些频繁犯错的员工不是能力不行而是心已经不在这里了。\n\n【避坑指南】恒卦告诉你现在最忌讳的就是冲动裸辞。在找到下家之前请继续忍耐。利用现在工作不忙的时候去更新简历去面试去了解市场行情。骑驴找马虽然听起来不那么体面但这是成年人最稳妥的转型方式。那些为了逞一时之快而裸辞的人最后大部分都因为经济压力而接受了不如之前的工作。成年人做的不是对错题而是风险题。"}, "4,8": {"name": "雷地豫", "classic": "<strong>雷地豫 · 卦辞精解</strong><br><br>雷出地奋豫也。愉悦欢乐顺时而动。", "overall": "【现状剖析】你最近状态明显松快下来了整个人从之前那种紧绷的备战状态进入了游刃有余的巡航模式。你现在做事情不再急吼吼地往前冲而是开始享受过程本身。这种松弛感不是你懒散了而是你对当前局面的掌控力已经达到了一个更高的层次。那些真正厉害的人都不是整天忙得团团转的人而是看起来从容不迫但事情都做得很漂亮的人。你现在就进入了这种状态。\n\n【体用天机】豫卦上雷下地雷出地奋万物喜悦。你现在的能量场正在向外发射积极信号你会发现最近约你吃饭的人变多了找你合作的人态度更好了就连你在社交场合随便讲个笑话大家都笑得特别配合。这是你磁场变好的直接体现。你要利用这段高人气期去推动那些之前一直搁置的事情因为只有在大家都愿意配合你的时候才能把最难的事做成。\n\n【变卦警示】但豫卦的豫还有另一层意思——预备。在顺境中最容易犯的错误就是放松警惕。你现在的好运气不会一直持续下去趁现在心情好精力旺人缘佳赶紧把那些需要别人配合的事情办了别拖到运势回落的时候再去求人。那些在顺境中懂得储备的人在逆境来临时才能从容应对。", "wealth": "【财运趋势】你现在走路都感觉空气里飘着钱的味道。豫卦时期的财运是你最近半年最好的一波。市场在配合你客户在配合你甚至连平时跟你唱反调的同事都在不自觉地帮你。如果你在做项目或谈合作现在正是快速推进的最佳窗口期。那些之前推进不动的事情现在突然变得顺利了这不是你运气好而是你之前的准备工作在这个时刻集中回报了。\n\n【细节断语】但豫卦的财有个特点——来得快去得也快。你可能会在某一天突然收到一笔意外之财比如奖金提成或者一笔被遗忘的款项到账了但这种好事情往往伴随着花钱的冲动。你大概率会在收到钱的一周之内以各种理由花出去。所以当你收到意外之财的时候请强迫自己在48小时内不要动用它。真正的财务智慧不是赚多少钱而是留住多少钱。\n\n【避坑指南】豫卦时期的消费陷阱是庆祝型消费。项目刚谈成还没收款呢你就已经开始规划庆功宴在哪个饭店了。在钱真正落袋之前一切庆祝都是提前消费。那些提前庆祝的人往往在遇到变故时措手不及而那些等事情尘埃落定再庆祝的人才能享受到真正的喜悦和财务安全。先收款再庆祝这是成年人最基本的财务纪律。", "love": "【感情现状】你最近在感情里活得特别舒展像一只在阳光下打滚的猫。单身的朋友你现在整个人的状态非常好这种松弛自信的气场比任何高端护肤品都管用。你会发现当你不再焦虑地寻找爱情的时候反而有人开始注意到你了。微信上那个好久没联系的人突然给你发了条消息同事突然问你是不是换风格了——这些都是桃花运即将到来的前兆。你越放松越有魅力你越用力越不可爱。\n\n【桃花指引】接下来两周内你会通过社交活动认识一个让你眼前一亮的人。这个人跟你之前交往过的类型完全不同——他们可能收入不如你长相不出众但身上有一种让你莫名放松和安心的感觉。请放下你的标准清单用心去感受和这个人在一起时你自己的状态。有时候那个不符合你所有标准的人反而能给你最舒服的关系。因为你预设的标准可能只是你过去的经验不是未来的指南。\n\n【避坑指南】不要因为自己心情好就轻易开始一段关系。有些人在你心情好的时候看着顺眼但你情绪低落的时候他们可能根本接不住你。先见过对方最差的一面再决定要不要在一起。感情中最危险的事情就是在你最开心的时候做了一个最冲动的决定。好的感情不是一时兴起的冲动而是深思熟虑的选择。", "career": "【工作状态】你最近在公司里走路都带风同事们明显感觉到你心情很好好说话了很多。这种愉悦的工作状态让你在处理那些本来很棘手的事情时都多了一份从容。豫卦时期的你在职场中是最有魅力的时候——你不再斤斤计较不再钻牛角尖而是开始享受工作本身带来的成就感。这种状态下你解决了一个问题之后又会有新的灵感涌现形成了一个正向循环。\n\n【细节断语】趁这段高人气期去做一件你拖了很久都不敢做的事——跟你的领导谈一次心。不是谈加薪也不是谈升职而是真诚地聊聊你的职业规划和对团队的看法。领导会因为你现在的积极状态而对你刮目相看在无形中为你铺平未来半年的上升通道。那些平时不敢说的话在气氛好的时候说出来效果会好很多。好的时机能让同样的话产生完全不同的效果。\n\n【避坑指南】豫卦的积极能量会让你变得过于乐观。在签署任何合同或协议之前请务必让法务或第三方帮你读一遍条款。你现在的状态容易对人大意信任而这恰好是别人钻空子的最佳时机。保持你的好心情但不要让你的好心情成为别人利用你的机会。乐观不是傻白甜不是对所有人都无条件的信任。"}, "5,5": {"name": "巽为风", "classic": "<strong>巽为风 · 卦辞精解</strong><br><br>随风巽也。谦逊入微以柔克刚。", "overall": "【现状剖析】你最近不需要用任何强硬的手段去达成目的。巽为风双风相随你现在最有力的武器不是嗓门大脾气硬而是像风一样悄悄地渗透和影响。你不需要说服别人只需要持续地出现在他们面前持续地输出你的价值。时间长了你会发现那些曾经反对你的人已经在不知不觉中被你同化了。世间最有力量的东西不是那些刚硬的事物而是那些柔软的事物。水能穿石风能化石不是因为它强而是因为它持续。\n\n【体用天机】双风相随渗透之象。巽卦的核心是以柔克刚。你现在面对的那些难题硬碰硬解决不了但换一种柔和的方式反而有转机。那些你说服不了的人不需要再试图去说服他们让时间来证明你的正确用结果来回应他们的质疑。真正的强者从不需要用声音大小来证明自己。沉默地做好自己等待结果说话这就是巽卦的智慧。\n\n【变卦警示】巽卦也提醒你要保持谦逊。不傲慢不轻视任何一个人因为你不知道谁会在关键时刻帮你。那些你今天看不起的人明天可能成为你的贵人。保持谦逊不是虚伪而是一种清醒。知道自己的位置知道自己还有很多不知道的东西。这种清醒让你在任何时候都不会得意忘形也不会在低谷时自暴自弃。", "wealth": "【财运趋势】你的财运最近属于细水长流型。巽卦不会让你一夜暴富但它会给你一个持续稳定的收入来源。适合做长期生意和定期投资。不要追求快钱稳扎稳打才是你的财富密码。时间会给你满意的答案那些每天盯着K线图妄想一夜暴富的人最后往往追涨杀跌两手空空。而那些从不关注短期波动坚持定投的人反而在时间的复利中积累了可观的财富。慢一点稳一点最终走得最远。\n\n【细节断语】巽卦的财富策略是像风一样灵活。当风口变了你的策略也要跟着变。不要固执地守着已经过时的赚钱模式也不要盲目地追逐每一个新出现的风口。保持敏锐的洞察力判断哪些趋势是真正的机会哪些只是转瞬即逝的热点。那些能够持续赚钱的人不是因为他们预测得准而是因为他们发现方向错了就立刻调整。灵活比固执更能带来财富。\n\n【避坑指南】在巽卦的财务时期要特别注意不要因为过于追求稳定而错过了新的机会。你的谨慎是你的优点但过于谨慎就是你的缺点。在稳健的基础上保持一定的开放性试试新的投资方式了解新的行业动态。你不一定要深入参与但至少要了解和关注。那些对新事物完全没兴趣的人最后都被时代淘汰了。", "love": "【感情现状】你现在追求一个人的最佳策略不是猛烈进攻而是温柔渗透。不要急着表白先通过日常的关心和陪伴慢慢走进对方的生活。当你成了对方生活中不可或缺的一部分时根本不需要表白。那些大张旗鼓的表白往往会给对方造成压力而那些润物细无声的陪伴反而能让感情自然生长。最好的爱情不是追求来的而是吸引来的。你刚好在对方身边你们刚好互相喜欢这就是最好的剧本。\n\n【桃花指引】巽卦在感情中的策略是从朋友做起慢慢培养感情。那些一上来就表白的人往往把对方吓跑了而那些从朋友做起慢慢培养信任和默契的人最后反而得到了最稳定长久的关系。感情中最美好的部分不是确定关系的那一刻而是从朋友到恋人之间那段暧昧又甜蜜的过程。享受这个过程好好珍惜这段时光。\n\n【避坑指南】有伴侣的人近期要注意用柔和的方式沟通。你的语气你的态度比你说话的内容更重要。用温和的方式表达你的需求用微笑代替抱怨用理解代替指责。那些用温柔沟通的伴侣最后都比那些用情绪沟通的伴侣走得更远。好的沟通方式能让你的感情质量提升一个档次。", "career": "【工作状态】你在职场中的策略应该是润物细无声。不要急着在入职第一周就证明自己有多厉害先用三个月的时间通过持续的高质量输出建立你的职业口碑。你最大的优势是耐心和细节处理能力。那些在入职后急于表现的人往往因为用力过猛而暴露了自己的短板而那些默默观察稳步输出的人在试用期过后往往让所有人惊艳。慢一点看起来笨一点但最后的结果是最好的。\n\n【细节断语】巽卦的职业策略是培养影响力而不是权力。你不需要通过职位来影响别人而是通过你的专业能力和为人处世的态度来赢得别人的尊重和信任。那些真正有影响力的人往往不需要任何头衔因为他们的话就是权威他们的名字就是品牌。专注在提升你的专业能力上让实力为你说话而不是让职位为你代言。\n\n【避坑指南】在职场中保持适度的谦逊但不要过度低调到让人忽略你的存在。在适当的时候展现你的能力和成果让领导和同事知道你的价值。学会在低调中高调在谦逊中自信。那些默默做了很多事但从来不说的人最后功劳往往被别人抢走了。恰当的自我展示不是炫耀而是职业的一部分。"}, "5,6": {"name": "风水涣", "classic": "<strong>风水涣 · 卦辞精解</strong><br><br>风行水上涣也。涣散消散聚散有时。", "overall": "【现状剖析】你心里有些东西该放下了。风水涣卦风行水上波澜四散那些困扰你的负面情绪早就该结束的人际关系还有那些你明知道不可能却还在坚持的执念现在正是放手的时候。你握得越紧反而流失得越快松开手你才能腾出空间去接住新的可能。你的执念正在消耗你最后一点能量那些你拼命抓着不放的东西可能早就已经不属于你了。在这个世界上大部分的痛苦都来自于不愿意放手。\n\n【体用天机】风行水上涣散之象。涣卦的核心是说散就散聚散有时。你现在最需要的是告别过去告别那些不再适合你的人和事。这不是逃避而是为了更好的开始。你房间里的旧东西不扔掉新东西进不来你心里的旧人不放下新人也进不来。那些你以为放不下的人和事其实放下之后你会发现自己轻松了很多。人生就是一个不断放下的过程遗憾的是你没有好好道别但幸运的是你有了新的开始。\n\n【变卦警示】涣卦也提醒你在散的同时要有所聚。有些东西需要放下有些东西需要抓住。你在放下那些负面的情绪和关系的同时也要抓住那些真正重要的人和事。把你的精力从那些消耗你的事情上收回来放在那些滋养你的事情上。那些真正值得你珍惜的关系值得你花更多的时间和精力去维护。", "wealth": "【财运趋势】你的投资组合应该重新配置了。涣卦在财务上的建议是不要把所有鸡蛋放在一个篮子里。如果你之前的投资过于集中在某一个领域现在是时候分散风险了。同时清理那些长期亏损的资产也是一种涣散。让你在混乱中依然保持清醒的不是你赚了多少钱而是你把钱放在了哪里。那些真正的投资高手不是在牛市中赚得最多的人而是在熊市中亏得最少的人。\n\n【细节断语】涣卦的财务策略是分散投资降低风险。你最近可能因为一些突发的财务变动而感到不安但这不是坏事。因为变化提醒了你之前的资产配置存在风险。趁着这次调整优化你的投资组合。把那些表现不好的资产替换掉把那些过于集中的资产分散开。一次好的调整比十次糟糕的坚守更有价值。\n\n【避坑指南】在涣散时期最关键的是保护你的核心资产。那些你最重要的钱——应急金养老金教育金——必须放在最安全的地方不能有任何闪失。那些你可以承受损失的闲钱可以去尝试高风险高回报的投资。把鸡蛋分散在不同的篮子里并且把那些最重要的鸡蛋放在最安全的篮子里。", "love": "【感情现状】如果一段关系已经让你感到不健康了请勇敢放手。涣卦可能会带来一段关系的结束但这未必是坏事。给彼此自由才能各自找到更合适的人。不是所有的付出都值得挽回不是所有的关系都值得坚持。那些消耗你的人和你消耗的人都是在耽误彼此的时间。有时候最勇敢的事不是坚持而是放手。因为放手需要比坚持更大的勇气和更清醒的认知。\n\n【桃花指引】涣卦在感情中的启示是聚散有时不必强求。人生就像一列火车有人上车有人下车。那些陪你走了一段路的人即使下车了你也要心怀感激因为他们在那段路上给了你别人给不了的陪伴和温暖。那些离开你的人不是失去了而是阶段性地完成了他们的使命。你跟他们的故事已经写完了现在是时候翻到新的一页了。\n\n【避坑指南】有伴侣的人近期可能会面临聚少离多的考验。异地出差或者其他原因导致的分离可能会让你们的关系暂时变淡。但距离也会让你们更珍惜在一起的时光。在不能见面的日子里保持高质量的沟通分享各自的喜怒哀乐让对方知道你还在意着。那些经过时间和距离考验的感情往往比那些天天黏在一起的感情更牢固。", "career": "【工作状态】你的工作模式或业务模式可能需要进行大调整。涣卦时期的职场适合做减法——砍掉那些不赚钱的业务线优化效率低下的流程辞退那些不合适的员工。虽然短痛但长痛不如短痛。那些在业绩不好时不敢做出改变的管理者最后都被市场推着做出了改变而那时候做出的改变往往是被迫的代价更大。主动求变比被动应变好得多。\n\n【细节断语】涣卦的职业策略是适应变化拥抱变化。你所在的公司行业或岗位最近可能会发生一些让你措手不及的变化。但变化也是机会因为变化打破了原有的格局那些以前轮不到你的机会现在可能会落到你头上。那些在变化中依然保持积极心态的人最后往往会因为这些变化而获益而那些在变化中只知道抱怨的人最后都被淘汰了。\n\n【避坑指南】在职业变动的时期最重要的是保持你的核心技能不受影响。不管你换到什么地方你的专业能力永远是你的护身符。那些在变动中专注于提升自己的人最后都找到了更好的机会而那些在变动中只关注情绪起伏的人最后往往在情绪中错过了最佳的转型时机。能力是你的船在任何风浪中你都可以依靠它到达彼岸。"}, "5,7": {"name": "风山渐", "classic": "<strong>风山渐 · 卦辞精解</strong><br><br>山上有木渐也。循序渐进不急不躁。", "overall": "【现状剖析】你现在需要做的就是两件事——慢下来和坚持下去。风山渐卦风在山中缓缓穿行你最近是不是特别着急想要看到成果想要跨越阶段想要一步到位？请你停下这种冒进的冲动。你现在的节奏虽然慢但方向是对的。欲速则不达保持现有的速度稳步推进比追求所谓的加速度有效得多。那些跑得最快的人不一定最先到终点而那些保持匀速前进的人反而总能到达目的地。\n\n【体用天机】渐卦的核心是慢慢来比较快。你现在的每一步虽然看起来不起眼但每一步都让你离目标更近了一点。那些你看似缓慢的进步正在一点一点地积累总有一天会从量变到质变。急什么？你的人生不是一场短跑而是一场马拉松。那些在马拉松中一开始就冲刺的人最后往往在后半程精疲力竭而那些匀速前进的人最后反而跑完了全程。\n\n【变卦警示】渐卦也提醒你要保持耐心不要因为暂时看不到结果就放弃。那些你种下的种子需要时间才能发芽并不是种下去的第二天就会开花。在你放弃的前一天可能是成功离你最近的一天。那些在最想放弃的时候坚持下来了的人在回忆这段经历时都会庆幸自己当时没有放弃。因为黎明前的黑暗是最浓的。", "wealth": "【财运趋势】你的财富积累逻辑就是四个字——慢慢变富。你现在每一分钱都是靠你的能力和时间换来的辛苦钱这种钱虽然赚得慢但它最踏实。不要羡慕别人朋友圈里晒的那些暴富故事每个人的节奏不同。那些暴富的人可能明天就会暴负而那些慢慢变富的人会一直富下去。因为在慢慢积累的过程中你学到的不只是攒钱的习惯更是一种对抗诱惑的定力。这种定力比你赚到的钱更珍贵。\n\n【细节断语】渐卦的财务策略是积少成多聚沙成塔。你不需要一下子存很多钱只需要每月固定存一部分。你不需要一下子学会所有的投资知识只需要逐步学习慢慢实践。那些通过时间的复利积累起来的财富比那些一夜暴富得来的钱更稳固。因为你在积累的过程中也积累了对财富的理解和管理能力这种能力会保护你一辈子的财富安全。\n\n【避坑指南】在慢慢变富的过程中最大的敌人是你的焦虑。看到别人赚钱了你着急看到别人买房了你着急看到别人换车了你着急。但这些焦虑只会让你做出错误的财务决定。请相信你的节奏你的速度。那些因为焦虑而冲动投资的人最后大部分都付出了惨重的代价。保持冷静按照你的计划稳步前进。时间站在那些有耐心的人这边。", "love": "【感情现状】感情这件事急不得的道理你应该懂。从朋友做起慢慢培养感情基础这样的关系走到最后才最牢固。你最近急于推进的那段关系请主动放慢节奏看看对方的反应。好的感情经得起时间的考验那些太容易开始的感情往往也最容易结束。因为容易得到的东西人们往往不懂得珍惜而那些需要时间和努力才能得到的东西人们会加倍珍惜。\n\n【桃花指引】渐卦在感情中的启示是让感情自然生长。你不需要刻意制造浪漫不需要刻意推进关系。让感情按它自己的节奏生长——从相识到相知从相知到相爱。每一步都踩实了再往前走下一步。那些地基没打好的楼盖得再高也会倒那些感情基础没打好的关系走得再近也会散。那些在感情中学会了慢慢来的人往往能走最远的路。\n\n【避坑指南】有伴侣的人你们的感情需要在日常的点滴中慢慢经营。那些看似微不足道的关心问候和陪伴正是滋养感情的养分。不要小看日常的力量它是感情最坚实的基础。那些轰轰烈烈的浪漫只是感情的瞬间火花而已真正支撑感情走完一生的是那些平淡但持续的温暖和陪伴。", "career": "【工作状态】你在职场中的发展路径适合稳扎稳打。虽然你看似进步缓慢但你的每一步都踩得很稳。不要因为周围的同事跳槽涨薪就乱了阵脚每个人的节奏不同。你这个岗位最需要的就是深度沉淀。那些在这个行业里能够走得很远的人不是那些跳槽最频繁的人而是那些在一个领域深耕最久的人。因为深度能让你看到别人看不到的机会做出别人做不到的判断。\n\n【细节断语】渐卦的职业策略是通过持续的小进步积累大成就。你不需要一年内升职加薪你只需要确保这一年比上一年有进步。那些每年进步一点点的人在十年后已经远远超越了那些当年昙花一现的人。这就是复利的力量在职业发展中的体现。你不需要跑得最快你只需要跑得最久。在你跑到最后的时候你会发现前面已经没有多少人了。\n\n【避坑指南】在稳扎稳打的同时也要保持对行业变化的敏感度。不要因为追求稳定而变得迟钝。定期学习新知识了解新趋势保持你的竞争力。那些有深度的同时也保持广度的人在职场上最有竞争力。T型人才就是既有深度又有广度的人。你需要在你的专业领域有深度同时在你相关的领域有一定的广度。"}, "5,8": {"name": "风地观", "classic": "<strong>风地观 · 卦辞精解</strong><br><br>风行地上观也。观察省视以明得失。", "overall": "【现状剖析】你现在不需要做任何事只需要好好看一看。风地观卦风行地上遍览万物你现在需要的不是行动力而是洞察力。你最近是不是在信息还不充分的情况下就急着做了决定？请先停下来把所有的信息都摸清楚再出手。一个理智的观察者比一个盲目的行动者更容易在这个阶段做出正确的决策。看清了再行动比碰运气式的行动要有效率得多。\n\n【体用天机】风行地上遍览之象。观卦的核心智慧是站得高看得远。你现在需要跳出当前的局面从一个更高的视角来审视自己的生活。那些让你纠结的小事在更广的视角下可能根本不值一提。那些让你感到绝望的困境放在三个月后半年后再看可能根本不是问题。学会抽离自己从旁观者的角度来看自己的处境。你站在一楼看到的垃圾站在十楼就看不见了。\n\n【变卦警示】观卦也提醒你观察别人也是一种学习。从别人的成功中学习从别人的失败中汲取教训。你不需要自己把所有坑都踩一遍才能学会。聪明的人从别人的错误中学习智慧的人从自己的错误中学习而愚蠢的人犯了错也不学习。做一个聪明的人多观察多思考少走弯路。那些在你前面走过的人留下的经验和教训就是你最好的教科书。", "wealth": "【财运趋势】你的财务策略现在应该是先研究再动手。你最近看到的那些投资机会请至少花一周时间去了解行业背景和公司信息。不了解的领域不要碰虽然可能会错过一些机会但更能帮你避免踩到大坑。那些被各种投资项目收割的人不是因为运气不好而是因为他们在投资之前没有花足够的时间去了解。投资中最重要的原则不是回报率而是你懂多少。不懂不投。\n\n【细节断语】观卦的财务策略是用知识武装你的投资决策。你的投资回报率跟你对投资标的的了解程度成正比。那些随便听听别人的推荐就投钱的人最后大部分都成了推荐人赚钱的渠道而不是赚钱的人。在你把钱投出去之前请确保你已经足够了解这个产品这个行业背后的逻辑。投资中最贵的教训就是你不了解就下手。花在了解上的时间是你最值得的投资。\n\n【避坑指南】在市场信息繁杂的时期请保持你的判断力。不是所有的信息都值得相信不是所有的分析都值得参考。学会分辨哪些是靠谱的信息来源哪些是别有用心的人释放的烟雾弹。在这个信息泛滥的时代一个能够独立思考的人比一个盲目跟风的人有十倍的优势。你的冷静和理性是你对抗市场噪音最有效的武器。", "love": "【感情现状】在感情里你应该多观察少行动。你最近是不是太急着想要一个结果了？先好好了解对方的三观和生活习惯观察对方在压力下的表现这些比你急着确定关系重要得多。当你决定和一个人共度余生之前请先看看他怎么对待服务员怎么对待家人怎么对待失败和挫折。这些细节比你看到的光鲜亮丽的外表重要一万倍。\n\n【桃花指引】观卦在感情中的启示是用心观察再用心感受。不要被表面的热情和甜言蜜语迷惑。真正的感情不是看对方在你状态好的时候对你有多好而是看对方在你状态不好的时候对你有多包容。当你卸下所有的伪装和防备在一个人面前展示出最真实的自己时对方依然选择留在你身边这才是值得你珍惜的感情。观察对方是否接受那个真实但不完美的你。\n\n【避坑指南】单身的朋友在遇到让你心动的人之后请花时间去了解但不是花时间去调查。了解是带着善意去认识一个人调查是带着怀疑去挖掘一个人。你的出发点决定了你的方式也决定了这段关系的走向。用开放的心态去认识一个新的人同时用敏锐的眼光去判断他是否真的适合你。不被爱情冲昏头脑是你对自己最大的保护。", "career": "【工作状态】如果你刚入职一家新公司或刚接手一个新项目现在是你最好的观察期。不要急着表现和立功先搞清楚公司的权力结构各部门的利益关系领导的用人风格。这些信息比你的业务能力更能决定你的职场命运。那些在工作中看起来运气一直很好的人不是因为能力特别强而是因为他们读懂了职场的人情世故做出了最聪明的选择。\n\n【细节断语】观卦在职场中的策略是多听多看少说。你在一个陌生的环境中最有价值的行为不是表现而是观察。先了解清楚每个人的性格做事风格利益诉求之后你才能知道该跟谁合作该防着谁该向谁学习。那些一入职就急于表现的人往往因为没有看清形势而得罪了不该得罪的人而那些先观察后行动的人才能够游刃有余地在新环境中立足。\n\n【避坑指南】在充分观察之后你需要做出判断——这个环境是否适合你的长期发展。如果不适合尽早做打算不要在错误的地方消耗你的时间和精力。但如果适合请制定你的行动计划逐步展现你的价值。你观察清楚了再决定自己要在这场局中扮演什么角色。最怕的不是没有选择而是连自己有什么选择都不清楚。来都来了不如先看清楚再走。"}, "6,2": {"name": "水泽节", "classic": "<strong>水泽节 · 卦辞精解</strong><br><br>泽上有水节也。节制适度过犹不及。", "overall": "【现状剖析】你最近有点过火了。水泽节卦泽上有水水满则溢你在某个方面已经过头了——可能是花钱太狠可能是工作太拼可能是对某个人管得太紧。任何好东西过量了都会变成毒药。你最近的疲惫和焦虑不是因为生活对你不公平而是你自己没有控制好自己的节奏。是时候给自己踩一脚刹车了。节制不是压抑而是在正确的时间做正确的事情。你不会在深夜吃大餐也不会在冬天穿短袖这就是节制的智慧。\n\n【体用天机】节卦的核心是适度。水太多了会溢出堤坝会决口。你现在的生活和工作节奏已经到了一个危险的临界点。你总是在追求更多更快更好但你没有考虑过你的身体你的情绪你的关系能不能承受这种高强度的节奏。请把你的节奏降下来那些追求极致的人往往在接近极致的时候崩溃了而那些懂得节制的人反而能走得更远。\n\n【变卦警示】节卦也提醒你不要因为过度节制而变得吝啬。节制和吝啬是两个概念。节制是理性的选择吝啬是恐惧的结果。你学习的不是省掉所有的快乐而是在需要消费的时候大方在不需要的时候控制。那些该花的钱要花那些该享受的生活要享受真正的生活智慧不是不吃甜食而是知道什么时候吃多少。", "wealth": "【财运趋势】你在财务上的漏水管正在源源不断地往外淌水。打开你的手机账单看一眼你上个月在那些根本不必要的东西上花了多少钱？节卦给你的理财建议是省下来的就是赚到的。请在本月之内做一次全面的财务体检看看你的钱到底都流向了哪里。那些无意识的小额消费是你财富积累的最大敌人。一杯奶茶不贵但一年下来喝掉的钱可能够你买一部新手机了。这就是节卦要你注意的细节。\n\n【细节断语】节卦的财富策略是建立预算和储蓄习惯。你不需要过苦行僧的生活但你需要知道你的钱都花在了哪里。每月初给自己做一个简单的预算然后把你的收入先存一部分再开始消费。那些每个月花光所有收入的人无论赚多少钱都存不下钱因为他们永远在消费和赚钱之间循环。打破这个循环的方法就是强制储蓄。存了再花而不是花了再看剩下多少。\n\n【避坑指南】在节制消费的过程中要注意不要走极端。你不需要完全放弃你的爱好和享受只需要把它们控制在合理的范围内。每周一次的咖啡可以保留但每天一杯的咖啡可以考虑减半。那些为了省钱而完全放弃生活乐趣的人最后往往因为压抑太久而报复性消费。适度才是节卦的核心不是在两端之间摇摆而是找到让所有变量都健康的中间点。", "love": "【感情现状】你最近是不是管对方管得太紧了？翻手机查岗每天打十个视频电话要求对方随时报备行程——这不是爱是控制。给对方一点呼吸的空间不要让你的爱成为对方的负担。那些因为爱而变得紧张和控制的人最后往往因为这种紧张和控制而失去了爱情。好的感情不是捆绑而是陪伴。给对方自由你的自由也是对方给你的。信任让关系轻松让爱生长。\n\n【桃花指引】节卦在感情中的智慧是保持适当的距离和空间。即使在最亲密的关系中每个人也需要有自己的私人空间和时间。你不需要二十四小时跟对方在一起你也不需要知道对方每时每刻在做什么。信任不是要求对方报告所有的事情而是即使你不知道对方在哪里你也相信对方在做正确的事。那些在感情中太紧的人往往是因为自己太不自信了。\n\n【避坑指南】有伴侣的人近期要特别注意你的控制欲。你最近是不是经常感到不安是不是经常想要确认对方的行踪？这种不安的来源不是对方的问题而是你内心的不安全感。你在害怕什么？是害怕失去还是害怕被背叛？试着去信任对方也试着去修复自己的安全感。那些在感情中有安全感的人往往也能给对方安全感。你给对方的空间就是你给自己的空间。", "career": "【工作状态】你最近的工作量已经严重超载了你需要主动调整节奏。提高效率而不是延长时间如果任务太多就主动跟领导沟通重新分配优先级。不要因为怕被认为能力不够就一直硬撑。过劳的后果远比工作失误更严重。那些因为工作而累倒的人最终什么都没得到留下的是一个需要时间去修复的身体和一堆等着被别人接手的工作。你倒下了地球照样转但是你的身体垮了就真的垮了。\n\n【细节断语】节卦在职场中的策略是合理分配你的精力和时间。你不是超人你不可能把所有的事情都做好学会说不是职场最重要的能力之一。哪些任务必须由你完成哪些任务可以交给别人哪些任务可以直接拒绝这是一个成熟职场人需要学会的判断。那些不会拒绝的人最后承担了最多的工作得到了最少的回报因为他们的好说话让别人觉得他们的时间不值钱。\n\n【避坑指南】在节制你的工作节奏时要注意不要过度放松。适度的工作压力和工作节奏是必要的。完全没有压力的工作会让你失去动力和成长的机会。节卦是告诉你找到那个让你既不会过劳也不会懈怠的平衡点。每天工作充实但不疲惫每周有成就但不焦虑。这样的节奏才能让你在职场上走得更远更长久。"}, "6,3": {"name": "水火既济", "classic": "<strong>水火既济 · 卦辞精解</strong><br><br>水在火上既济也。大功告成守住成果。", "overall": "【现状剖析】你最近迎来了一座人生的里程碑。水火既济卦水在火上烹饪已成你之前所有的努力都在这一刻兑现了——表白成功了项目验收了考试通过了那个你追了半年的目标终于握在手里了。这是你应得的请你好好享受这一刻的成功。但既济卦最深刻的智慧是守成比创业更难。那些在成功之后迅速崩塌的人都是因为不懂得守住成果。你现在最需要的不是庆祝而是思考如何守住你刚刚得到的一切。\n\n【体用天机】既济卦的核心是功成身退守住成果。你现在的状态就像刚打完一场胜仗的将军。你有权利骄傲有权利庆祝但你不能一直停留在胜利的喜悦里。因为战争还没有结束你要守卫你的城池你的江山你的已成之事。那些在成功之后忘乎所以放松警惕的人往往在最短的时间内失去了他们辛苦赢得的一切。保持警觉保持努力你的成功不是终点而是新的起点。\n\n【变卦警示】既济卦的警示是物极必反盛极必衰。你已经走到了一个阶段的顶点从这一刻开始无论你怎么走都是在往下走。这不是诅咒而是自然规律。你不需要恐慌你只需要接受这个规律然后做好应对下坡路的准备。哪些事情在上坡的时候做哪些事情在下坡的时候做提前规划好。巅峰期该做的是防守而不是进攻因为你已经没有上升的空间了。所谓守江山比打江山难说的就是这个道理。", "wealth": "【财运趋势】你终于到了收割的季节。你的投资开始产生回报你的副业开始稳定盈利你努力了很久的项目终于开始回款。现在是时候收网了。见好就收不要贪心追加。设定一个止盈点到了就撤。那些因为在赚钱时贪婪而最后连本带利输回去的人比你想象的要多得多。投资的最高境界不是会买而是会卖。那些在最贪婪的时候依然能够保持冷静止盈离场的人才是在这个市场中真正赚到钱的人。\n\n【细节断语】既济卦的财富策略是锁定利润降低风险。你已经赚到钱了现在是时候把你的利润转移到安全的地方去了。不要把所有赚到的钱都继续放在高风险的领域。把大部分利润拿出来放在安全资产中用小部分留在高风险的领域继续尝试。那些在高回报的诱惑下把全部资金继续投入的人往往在下一波调整中把之前的利润全部还给了市场还要倒贴本金。懂得收手是一种别人学不会的智慧。\n\n【避坑指南】在财务收获期最大的敌人是你的贪心。你赚了一百万就想赚一千万你赚了一千万就想赚一个亿。这种贪心让你永远不满足也让你永远处于高风险的状态中。学会在收获之后停下来给自己放个假享受一下你的劳动成果。不要让你的生活全部被赚钱占据因为赚钱只是手段生活才是目的。那些把所有时间都用在赚钱上的人最后发现自己除了钱什么都没有。", "love": "【感情现状】你们之间的关系终于修成了正果。单身的朋友你现在心仪的那个人很可能回应了你的感情有伴侣的你们可能会订婚或结婚。但既济卦提醒你关系走到一个稳定的节点不等于可以不用经营了感情是一辈子的事业。那些在成功走到一起之后就放松了对感情的经营的人最后会发现不知不觉中从恋人变成了室友。好的感情需要持续地投入持续地用心持续地制造新鲜感。结了婚之后更要谈恋爱。\n\n【桃花指引】既济卦在感情中的启示是珍惜当下也规划未来。你们刚刚达成了一些重要的感情里程碑这些值得庆祝但也值得深思。你们接下来要往哪里走你们的目标一致吗你们对未来的想象一样吗？在感情的高光时刻聊这些话题不会扫兴反而会让你们的关系更有方向感。那些对未来有共同规划的伴侣比那些只活在当下的伴侣走得更远也更稳。\n\n【避坑指南】桃花期的高峰过后你可能会感到一些失落感因为从追求到确定之后那种心动的刺激感会减弱。但这不是感情变淡了而是感情进入了另一个更深的阶段。从激情到亲密从追逐到相伴这个转变是每一段成熟感情都必须经历的。接受这种转变享受这种转变因为平淡中的相守比激情中的追逐更接近爱的本质。", "career": "【工作状态】你在职场中完成了一个重要的里程碑。项目成功交付目标顺利达成你现在可以享受一下久违的成就感。但不要躺在功劳簿上太久既济卦之后就是未济卦事情永远不会真正结束。你那个项目完了还有下一个项目你升职了还有更高的职位等着你。那些在完成一个目标后就停下来的人很快就会被那些持续前进的人超越。所以不要停下脚步短暂庆祝之后继续出发。\n\n【细节断语】既济卦的职场策略是在高峰期谋划下一个阶段。你现在站在一个不错的位置上有最好的资源最大的话语权。利用这个时机去谋划你的下一步。不是等你从顶峰开始下滑了再去想怎么走而是在你还在顶峰的时候就开始布局。那些在职场上一路走高的人不是在每个阶段都做得最好的人而是在每个阶段都在为下一个阶段做准备的人。今天的你决定了明天的你。\n\n【避坑指南】在职场成功的时刻要保持谦逊。那些在你成功时给你祝贺的人可能有一些是真心为你高兴有一些是等着看你跌下来。不要因为成功了就得意忘形保持你一贯的做事风格继续尊重你的团队继续认真对待你的工作。成功不是你可以放松的理由而是你需要更加努力的理由。因为你知道站在高处的人摔下来的时候比站在低处的人更疼。"}, "6,4": {"name": "水雷屯", "classic": "<strong>水雷屯 · 卦辞精解</strong><br><br>云雷屯也。初生艰难但充满生机。", "overall": "【现状剖析】你现在正处在一个让人抓狂的起步期就像一颗刚冒出地面的种子被压在了一块石头下面。你明明已经有了一个好想法一个好计划但现实就是处处跟你作对——注册公司卡在某个奇葩环节新项目的第一笔款项迟迟不到位甚至连你一向精力充沛的身体都开始抗议了。但这些困难都是正常的每一个成功的人在起点都经历过这种被按在地上摩擦的阶段。那些一开始就一帆风顺的人反而是最危险的人因为他们在真正的风暴来临时没有应对的经验。\n\n【体用天机】屯卦上水下雷云雷交加万物始生。你现在遇到的每一道坎其实都是在帮你筛选竞争对手。因为大部分人都会在这个阶段选择放弃而你只要多撑一天你就比别人多往前走了一步。那些在你之后进入这个领域的人会发现你已经领先他们一步了而这一步就是你在这个阶段多坚持的每一天积累起来的。起步期的困难不是来打败你的而是来帮你淘汰那些意志不够坚定的人的。\n\n【变卦警示】屯卦最忌讳的不是困难本身而是你在困难面前开始自我怀疑。你是不是最近经常半夜睡不着反复问自己我真的能行吗？这种念头比任何外部阻力都可怕因为它会从内部瓦解你的意志。请记住种子在破土之前在地下经历的黑暗和挤压比你现在承受的要多得多。那些所有最终破土而出的种子都经历过被泥土掩埋被黑暗包围被石头阻挡的时期。你现在就是那颗种子。", "wealth": "【财运趋势】你现在正处在财富积累最难熬的第一个阶段——投入比产出多操心比赚钱多。这个阶段每一个创业者每一个想要翻身的人都要经历。你现在每一分钱都要掰成两半花。不要跟别人攀比你表弟买房了你同学换车了你前同事跳槽年薪翻倍了这些都跟你没关系。你现在是在播种期别人的收获季还没到的时候他们也是这么苦过来的。他们展示给你的只是他们愿意让你看到的好的一面而不是他们最苦的时期。\n\n【细节断语】这个阶段你最不该做的事就是跟别人攀比。稳住现有的现金流哪怕这个月只赚了两千块只要方向是对的这钱就是未来的种子。那些在起步阶段因为看不到希望而放弃的人永远不会知道如果再多坚持一个月可能就看到曙光了。创业和赚钱就像在黑屋子里洗衣服你不知道洗干净了没有只能一遍一遍地洗等到灯亮的那一刻你会发现只要你认真洗过了那件衣服就会光亮如新。\n\n【避坑指南】不要在起步阶段就急着请人帮忙。你自己还没搞清楚业务逻辑之前雇来的员工只会浪费你的时间和金钱。先一个人把整个流程跑通一遍等赚钱的路径清晰了再考虑扩大团队。那些在没有验证商业模式之前就盲目扩张的人最后都死在了现金流断裂上。小而美是你这个阶段最好的姿态因为小让你灵活美让你独特。", "love": "【感情现状】你们之间的关系处于一个让人心累的萌芽期。两个人都还没有完全信任对方说话做事都带着试探和保留。你发一条消息要反复斟酌措辞对方回得慢了你就在心里上演一场大戏。这种患得患失的感觉确实折磨人但恰恰说明你们都很在乎这段关系。那些完全不在乎的人是不会因为对方回消息慢而焦虑的。你的焦虑恰恰是你的在乎但你的焦虑也可能成为这段关系的压力。\n\n【桃花指引】如果你是单身最近遇到的那个让你心动的人你们的关系还处于极其脆弱的初始阶段。你现在的任务是控制住自己不要表现得太急切——不要每天发早安晚安不要在对方没回消息的时候连环追问更不要刚认识几天就开始规划未来。让感情像煲汤一样用小火慢慢炖。刚开始就大火猛炖的汤不是煮干了就是味道寡淡而那些小火慢炖的汤最是浓香四溢。感情也是一样。\n\n【避坑指南】萌芽期的感情最怕的就是用力过猛。你越是表现得非对方不可对方就越想逃。保持适当的距离和神秘感把精力分一些给工作和爱好反而会让对方对你产生更多好奇。那些在感情中表现得完全不在意的人反而最有吸引力而那些把自己的所有都展现给对方的人反而让对方失去了探索的欲望。留一点神秘感给对方就是留一点空间给感情生长。", "career": "【工作状态】你最近在职场上的处境就像一个新人在大雨天跑业务——处处碰壁满身泥泞但还得咬牙坚持下去。你刚接手的新任务或者新岗位让你手忙脚乱连最基本的流程都要反复问你甚至开始怀疑自己是不是真的适合干这个。请放心这完全正常。每一个职场老手都经历过你这个阶段。那些看起来游刃有余的人只是因为他们比你早一点经历了你现在正在经历的慌乱。你不需要跟他们的现在比你只需要跟他们的过去比。\n\n【细节断语】你现在最需要的不是一个完美的计划而是一个愿意带你的导师。不是你的直属领导而是那个比你早几年入行愿意带你一把的前辈。主动请他喝杯咖啡谦虚地请教几个问题比你一个人闷头死磕三个月都管用。屯卦时期的职场策略就是熬过前三个月。只要你坚持住不放弃第四个月开始一切都会顺起来。因为到那个时候你已经熟悉了环境掌握了基本技能建立了初步的人际关系。万事开头难然后中间难但最后都会好的。\n\n【避坑指南】不要在刚入职或刚接手新项目的时候就想证明自己有多厉害。低调观察多听少说先把业务基础打扎实了再考虑表现的事。过早暴露野心只会让你成为别人的靶子。那些刚入职就到处表现的人往往在不经意间得罪了那些在公司里有资历但低调的同事。他们不会当面说你不好但他们会在关键时刻让你知道什么叫姜还是老的辣。保持谦逊做好自己的事时间会证明你的价值。"}};
-var defaultData = {"overall": "【现状剖析】当前卦象玄妙，请静心体悟。\n\n【体用天机】天地之气正在交汇，运势正在发生变化。\n\n【变卦警示】保持耐心观察变化，不要急于做出判断。", "wealth": "【财运趋势】财运平稳，宜守不宜攻。\n\n【细节断语】正财稳定，偏财谨慎。\n\n【避坑指南】不要轻信快速致富的机会。", "love": "【感情现状】缘分在路上，保持开放心态。\n\n【桃花指引】多参加社交活动，扩大交友圈。\n\n【避坑指南】不要因为孤独而将就。", "career": "【工作状态】稳中有进，不宜冒进。\n\n【细节断语】做好分内事，等待机会。\n\n【避坑指南】不要冲动跳槽或转型。", "classic": "<strong>卦辞精解</strong><br><br>此卦蕴含天机，请结合当下心境静心体悟。"};
-</script>
+</div>
 
 <script>
-    // ================================================================
-    //  一、农历数据表（1900–2100）
-    // ================================================================
-    var lunarInfo = [
-      0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
-      0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
-      0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
-      0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
-      0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
-      0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
-      0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
-      0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
-      0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
-      0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,
-      0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
-      0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
-      0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
-      0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
-      0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
-      0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06aa0,0x1a6c4,0x0aae0,
-      0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
-      0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
-      0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
-      0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,
-      0x0d520
-    ];
-    var tianGan = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-    var diZhi = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-    var diZhiShu = {子:1,丑:2,寅:3,卯:4,辰:5,巳:6,午:7,未:8,申:9,酉:10,戌:11,亥:12};
-    var baGua = {1:{name:'乾',symbol:'☰',attr:'天',wuxing:'金'},2:{name:'兑',symbol:'☱',attr:'泽',wuxing:'金'},3:{name:'离',symbol:'☲',attr:'火',wuxing:'火'},4:{name:'震',symbol:'☳',attr:'雷',wuxing:'木'},5:{name:'巽',symbol:'☴',attr:'风',wuxing:'木'},6:{name:'坎',symbol:'☵',attr:'水',wuxing:'水'},7:{name:'艮',symbol:'☶',attr:'山',wuxing:'土'},8:{name:'坤',symbol:'☷',attr:'地',wuxing:'土'}};
-    var shiChenNames = ['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时'];
-    var lunarMonths = ['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'];
-    var lunarDays = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+// ============================================================
+//  1. 八卦数据
+// ============================================================
+const TRIGRAM = {
+  1: { name: '乾', symbol: '☰', nature: '天', lines: [1,1,1] },
+  2: { name: '兑', symbol: '☱', nature: '泽', lines: [1,1,0] },
+  3: { name: '离', symbol: '☲', nature: '火', lines: [1,0,1] },
+  4: { name: '震', symbol: '☳', nature: '雷', lines: [1,0,0] },
+  5: { name: '巽', symbol: '☴', nature: '风', lines: [0,1,1] },
+  6: { name: '坎', symbol: '☵', nature: '水', lines: [0,1,0] },
+  7: { name: '艮', symbol: '☶', nature: '山', lines: [0,0,1] },
+  8: { name: '坤', symbol: '☷', nature: '地', lines: [0,0,0] },
+};
 
-    function lunarYearDays(y) { var s=348; for(var i=0x8000;i>0x8;i>>=1){s+=(lunarInfo[y-1900]&i)?1:0;} return s+leapDays(y); }
-    function leapDays(y) { return leapMonth(y)?((lunarInfo[y-1900]&0x10000)?30:29):0; }
-    function leapMonth(y) { return lunarInfo[y-1900]&0xf; }
-    function monthDays(y,m) { return (lunarInfo[y-1900]&(0x10000>>m))?30:29; }
-    function solarToLunar(year,month,day) {
-      var offset=Math.floor((new Date(year,month-1,day)-new Date(1900,0,31))/864e5);
-      var lYear,lMonth,lDay,isLeap=false;
-      for(lYear=1900;lYear<2101&&offset>0;lYear++){offset-=lunarYearDays(lYear);}
-      if(offset<0){offset+=lunarYearDays(lYear-1);lYear--;}
-      var leap=leapMonth(lYear);isLeap=false;
-      for(lMonth=1;lMonth<=12&&offset>0;lMonth++){
-        if(leap>0&&lMonth===(leap+1)&&!isLeap){lMonth--;isLeap=true;offset-=leapDays(lYear);if(offset<=0)break;isLeap=false;continue;}
-        offset-=monthDays(lYear,lMonth);
-      }
-      if(offset<=0){offset+=monthDays(lYear,isLeap?leap:lMonth);if(!isLeap)lMonth--;}
-      lDay=offset+1; return {lYear,lMonth,lDay,isLeap,leapMonth:leap};
-    }
-    function getYearGanZhi(year){var g=(year-4)%10,z=(year-4)%12;if(g<0)g+=10;if(z<0)z+=12;return{gan:tianGan[g],zhi:diZhi[z],zhiNum:diZhiShu[diZhi[z]]};}
-    function getShiChen(hour){
-      // 子23-0,丑1-2,寅3-4,卯5-6,辰7-8,巳9-10,午11-12,未13-14,申15-16,酉17-18,戌19-20,亥21-22
-      var map=[0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,0];
-      var idx=map[hour]||0;return{name:shiChenNames[idx],num:idx+1};
-    }
-    /** 计算当日干支（基于1899-12-31为甲未日校准） */
-    function getDayGanZhi(date){
-      var ref = new Date(1899, 11, 31); // 1899-12-31 为甲未日(0,8)
-      var diff = Math.floor((date - ref) / 864e5);
-      var ganIdx = (0 + diff) % 10; if(ganIdx<0) ganIdx+=10;
-      var zhiIdx = (8 + diff) % 12; if(zhiIdx<0) zhiIdx+=12;
-      return {gan:tianGan[ganIdx], zhi:diZhi[zhiIdx], ganIdx:ganIdx, zhiIdx:zhiIdx, ganzhi:tianGan[ganIdx]+diZhi[zhiIdx]};
-    }
-    /** 计算月干支（年上起月法） */
-    function getMonthGanZhi(yearGan, lunarMonth){
-      // 甲己之年丙作首，乙庚之岁戊为头，丙辛之岁寻庚上，丁壬壬寅顺水流，若问戊癸何处起，甲寅之上好追求
-      var map = {甲:2,乙:4,丙:6,丁:8,戊:0,己:2,庚:4,辛:6,壬:8,癸:0};
-      var startGan = (typeof yearGan==='number'?yearGan:map[yearGan]) || 0;
-      var ganIdx = (startGan + (lunarMonth - 1)) % 10;
-      var zhiIdx = (lunarMonth + 1) % 12; // 寅=2开始
-      return {gan:tianGan[ganIdx], zhi:diZhi[zhiIdx], ganzhi:tianGan[ganIdx]+diZhi[zhiIdx]};
-    }
-    /** 计算旬空地支（根据日干支） */
-    function getXunKong(dayGanZhi){
-      var g=dayGanZhi.ganIdx, z=dayGanZhi.zhiIdx;
-      // 找到当前旬起始的甲日地支
-      var xunStartZhi = ((z - g) % 12 + 12) % 12;
-      // 旬空 = 旬首地支 + 10, +11 (mod 12) 对应的两个地支
-      var kong1 = (xunStartZhi + 10) % 12;
-      var kong2 = (xunStartZhi + 11) % 12;
-      return {zhi1:diZhi[kong1], zhi2:diZhi[kong2], zhi1Idx:kong1, zhi2Idx:kong2};
-    }
-    /** 六冲 */
-    function getLiuChong(zhiIdx){ return diZhi[(zhiIdx + 6) % 12]; }
-    /** 六合 */
-    function getLiuHe(zhiIdx){ return diZhi[(zhiIdx % 2 === 0) ? zhiIdx - 1 : zhiIdx + 1]; }
+const YAO_NAMES = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'];
 
-    function formatLunarDate(y,m,d,isLeap){var gz=getYearGanZhi(y);return gz.gan+gz.zhi+'年 '+(isLeap?'闰':'')+lunarMonths[m-1]+' '+lunarDays[d-1];}
+// ============================================================
+//  2. 六十四卦数据
+//     键名格式: "上卦数字下卦数字"，如 "67" 表示上坎下艮
+// ============================================================
+const HEXAGRAM_DATA = {
+  // ── 乾为天 (上乾下乾) ──
+  "11": { name: "乾为天" },
+  "12": { name: "天泽履" },
+  "13": { name: "天火同人" },
+  "14": { name: "天雷无妄" },
+  "15": { name: "天风姤" },
+  "16": { name: "天水讼" },
+  "17": { name: "天山遁" },
+  "18": { name: "天地否" },
+  // ── 兑宫 ──
+  "21": { name: "泽天夬" },
+  "22": { name: "兑为泽" },
+  "23": { name: "泽火革" },
+  "24": { name: "泽雷随" },
+  "25": { name: "泽风大过" },
+  "26": { name: "泽水困" },
+  "27": { name: "泽山咸" },
+  "28": { name: "泽地萃" },
+  // ── 离宫 ──
+  "31": { name: "火天大有" },
+  "32": { name: "火泽睽" },
+  "33": { name: "离为火" },
+  "34": { name: "火雷噬嗑" },
+  "35": { name: "火风鼎" },
+  "36": { name: "火水未济" },
+  "37": { name: "火山旅" },
+  "38": { name: "火地晋" },
+  // ── 震宫 ──
+  "41": { name: "雷天大壮" },
+  "42": { name: "雷泽归妹" },
+  "43": { name: "雷火丰" },
+  "44": { name: "震为雷" },
+  "45": { name: "雷风恒" },
+  "46": { name: "雷水解" },
+  "47": { name: "雷山小过" },
+  "48": { name: "雷地豫" },
+  // ── 巽宫 ──
+  "51": { name: "风天小畜" },
+  "52": { name: "风泽中孚" },
+  "53": { name: "风火家人" },
+  "54": { name: "风雷益" },
+  "55": { name: "巽为风" },
+  "56": { name: "风水涣" },
+  "57": { name: "风山渐" },
+  "58": { name: "风地观" },
+  // ── 坎宫 ──
+  "61": { name: "水天需" },
+  "62": { name: "水泽节" },
+  "63": { name: "水火既济" },
+  "64": { name: "水雷屯" },
+  "65": { name: "水风井" },
+  "66": { name: "坎为水" },
+  "67": { name: "水山蹇" },
+  "68": { name: "水地比" },
+  // ── 艮宫 ──
+  "71": { name: "山天大畜" },
+  "72": { name: "山泽损" },
+  "73": { name: "山火贲" },
+  "74": { name: "山雷颐" },
+  "75": { name: "山风蛊" },
+  "76": { name: "山水蒙" },
+  "77": { name: "艮为山" },
+  "78": { name: "山地剥" },
+  // ── 坤宫 ──
+  "81": { name: "地天泰" },
+  "82": { name: "地泽临" },
+  "83": { name: "地火明夷" },
+  "84": { name: "地雷复" },
+  "85": { name: "地风升" },
+  "86": { name: "地水师" },
+  "87": { name: "地山谦" },
+  "88": { name: "坤为地" },
+};
 
-    var wuxingShengKe = {sheng:{'金':['水'],'水':['木'],'木':['火'],'火':['土'],'土':['金']},ke:{'金':['木'],'木':['土'],'土':['水'],'水':['火'],'火':['金']}};
-    function getWuxingRelation(x,y){if(x===y)return'biHe';if(wuxingShengKe.sheng[y]&&wuxingShengKe.sheng[y].indexOf(x)!==-1)return'yongShengTi';if(wuxingShengKe.sheng[x]&&wuxingShengKe.sheng[x].indexOf(y)!==-1)return'tiShengYong';if(wuxingShengKe.ke[x]&&wuxingShengKe.ke[x].indexOf(y)!==-1)return'tiKeYong';if(wuxingShengKe.ke[y]&&wuxingShengKe.ke[y].indexOf(x)!==-1)return'yongKeTi';return'biHe';}
-    var shengkeMessages={yongShengTi:{tag:'用生体 · 大吉',cls:'shengke-daji',text:'大吉！当前环境在全力滋养你，贵人运极强，借力使力必成。'},tiKeYong:{tag:'体克用 · 小吉',cls:'shengke-xiaoji',text:'小吉。事情在你的掌控之中，但需要你付出实际行动和心力去攻克障碍。'},yongKeTi:{tag:'用克体 · 有压力',cls:'shengke-yali',text:'有压力。当前面临外部环境的压制或小人作祟，宜守不宜攻，避其锋芒。'},tiShengYong:{tag:'体生用 · 泄气',cls:'shengke-xieqi',text:'泄气。你近期精力分散，付出多回报少，可能在为他人作嫁衣，需注意止损。'},biHe:{tag:'比和卦 · 平稳',cls:'shengke-pingwen',text:'平稳。伙伴相助，顺其自然，保持当下的节奏即可。'}};
+// ============================================================
+//  3. 笔画 → 卦数 映射
+// ============================================================
+function strokeToTrigram(strokes) {
+  if (strokes <= 0) return 0;
+  if (strokes <= 8) return strokes;
+  const r = strokes % 8;
+  return r === 0 ? 8 : r;
+}
 
-    function performDivination(date, N) {
-      var y=date.getFullYear(),m=date.getMonth()+1,d=date.getDate(),h=date.getHours();
-      var lunar=solarToLunar(y,m,d),ganZhi=getYearGanZhi(lunar.lYear),shiChen=getShiChen(h);
-      var dayGZ=getDayGanZhi(date), monthGZ=getMonthGanZhi(ganZhi.gan, lunar.lMonth), xunKong=getXunKong(dayGZ);
-      var nz=ganZhi.zhiNum,ys=lunar.lMonth,rs=lunar.lDay,ss=shiChen.num;
-      var n = (typeof N==='number'&&!isNaN(N)) ? N : (N ? N.toString().length : 0);
-      var un=(nz+ys+rs+n)%8;if(un===0)un=8;
-      var ln=(nz+ys+rs+ss+n)%8;if(ln===0)ln=8;
-      var yn=(nz+ys+rs+ss+n)%6;if(yn===0)yn=6;
-      var ug=baGua[un],lg=baGua[ln];
-      var isUpperYong=(yn>=4);
-      return{
-        lunar,ganZhi,shiChen,dayGZ,monthGZ,xunKong,
-        ganZhiDisplay:ganZhi.gan+ganZhi.zhi+'年 '+monthGZ.gan+monthGZ.zhi+'月 '+dayGZ.gan+dayGZ.zhi+'日（旬空：'+xunKong.zhi1+xunKong.zhi2+'）',
-        lunarStr:formatLunarDate(lunar.lYear,lunar.lMonth,lunar.lDay,lunar.isLeap),
-        upperGua:ug,lowerGua:lg,
-        tiGua:isUpperYong?lg:ug,yongGua:isUpperYong?ug:lg,
-        tiIsUpper:!isUpperYong,
-        wuxingRelation:getWuxingRelation((isUpperYong?lg:ug).wuxing,(isUpperYong?ug:lg).wuxing),
-        shengkeInfo:shengkeMessages[getWuxingRelation((isUpperYong?lg:ug).wuxing,(isUpperYong?ug:lg).wuxing)],
-        hexagramName:getHexagramName(un,ln),yaoNum:yn,yaoDesc:getYaoDescription(yn),
-        changedUpperGua:baGua[yn<=3?un:changeYao(un,yn-3)],
-        changedLowerGua:baGua[yn<=3?changeYao(ln,yn):ln],
-        changedHexagramName:getHexagramName(yn<=3?un:changeYao(un,yn-3),yn<=3?changeYao(ln,yn):ln),
-        upperNum:un,
-        lowerNum:ln,
-        changedUpperNum:yn<=3?un:changeYao(un,yn-3),
-        changedLowerNum:yn<=3?changeYao(ln,yn):ln,
-        key:un+','+ln,
-        changedKey:(yn<=3?un:changeYao(un,yn-3))+','+(yn<=3?changeYao(ln,yn):ln)
-      };
-    }
-    function changeYao(g,n){var m={1:7,2:6,3:5,4:4,5:3,6:2,7:1,8:0},r={7:1,6:2,5:3,4:4,3:5,2:6,1:7,0:8},b=m[g];b=b^(1<<(n-1));b=b&7;return r[b];}
-    function getYaoDescription(n){return{1:'初爻动',2:'二爻动',3:'三爻动',4:'四爻动',5:'五爻动',6:'上爻动'}[n]||'初爻动';}
+// ============================================================
+//  4. 构建六爻
+// ============================================================
+function buildHexagramLines(upperNum, lowerNum) {
+  const upper = TRIGRAM[upperNum];
+  const lower = TRIGRAM[lowerNum];
+  if (!upper || !lower) return [];
+  // 自下而上：初爻(0) → 上爻(5)
+  return [
+    ...lower.lines,  // 0,1,2 → 初、二、三
+    ...upper.lines,  // 3,4,5 → 四、五、上
+  ];
+}
 
-    var hexagramNames={'1,1':'乾为天','1,2':'天泽履','1,3':'天火同人','1,4':'天雷无妄','1,5':'天风姤','1,6':'天水讼','1,7':'天山遁','1,8':'天地否','2,1':'泽天夬','2,2':'兑为泽','2,3':'泽火革','2,4':'泽雷随','2,5':'泽风大过','2,6':'泽水困','2,7':'泽山咸','2,8':'泽地萃','3,1':'火天大有','3,2':'火泽睽','3,3':'离为火','3,4':'火雷噬嗑','3,5':'火风鼎','3,6':'火水未济','3,7':'火山旅','3,8':'火地晋','4,1':'雷天大壮','4,2':'雷泽归妹','4,3':'雷火丰','4,4':'震为雷','4,5':'雷风恒','4,6':'雷水解','4,7':'雷山小过','4,8':'雷地豫','5,1':'风天小畜','5,2':'风泽中孚','5,3':'风火家人','5,4':'风雷益','5,5':'巽为风','5,6':'风水涣','5,7':'风山渐','5,8':'风地观','6,1':'水天需','6,2':'水泽节','6,3':'水火既济','6,4':'水雷屯','6,5':'水风井','6,6':'坎为水','6,7':'水山蹇','6,8':'水地比','7,1':'山天大畜','7,2':'山泽损','7,3':'山火贲','7,4':'山雷颐','7,5':'山风蛊','7,6':'山水蒙','7,7':'艮为山','7,8':'山地剥','8,1':'地天泰','8,2':'地泽临','8,3':'地火明夷','8,4':'地雷复','8,5':'地风升','8,6':'地水师','8,7':'地山谦','8,8':'坤为地'};
-    function getHexagramName(u,l){return hexagramNames[u+','+l]||'未知卦';}
+// ============================================================
+//  5. 渲染六爻图
+// ============================================================
+function renderYao(containerId, lines, activeIndex) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  // 自下而上渲染
+  for (let i = 5; i >= 0; i--) {
+    const isActive = (i === activeIndex);
+    const row = document.createElement('div');
+    row.className = 'yao-row' + (isActive ? ' yao-active' : '');
 
-    // ================================================================
-    //  六、64 卦完整解库（内嵌数据，双击本地打开也可用）
-    // ================================================================
+    const label = document.createElement('span');
+    label.className = 'yao-label';
+    label.textContent = YAO_NAMES[i];
+    row.appendChild(label);
 
-    // 默认兜底（极少用到，仅防万一）
-    var defaultData = {
-      classic: '<strong>此卦玄妙，难以尽述</strong><br><br>此卦蕴含天地之机，变化无穷。请结合当下心境静心联想。',
-      overall: '此卦深奥。请静下心来，结合当下处境，卦象自会启发。',
-      wealth: '关于财运，此卦提示需结合实际具体分析。保持理性与耐心。',
-      love: '感情方面此卦无明确倾向。用心感受，听从内心。',
-      career: '工作上此卦提醒保持冷静。具体情况需具体分析。'
-    };
+    const line = document.createElement('span');
+    line.className = 'yao-line ' + (lines[i] === 1 ? 'yang' : 'yin');
+    row.appendChild(line);
 
-    /** 获取场景解卦文本 */
-    function getSceneText(key, scene) {
-      if (hexagramData && hexagramData[key]) {
-        return hexagramData[key][scene] || hexagramData[key].overall || defaultData.overall;
-      }
-      return defaultData[scene] || defaultData.overall;
-    }
+    container.appendChild(row);
+  }
+}
 
-    /** 获取经典卦辞 */
-    function getClassicText(key) {
-      if (hexagramData && hexagramData[key]) {
-        return hexagramData[key].classic || defaultData.classic;
-      }
-      return defaultData.classic;
-    }
+// ============================================================
+//  6. 主逻辑：起卦
+// ============================================================
+function performDivination(text) {
+  // 校验
+  text = text.trim();
+  if (text.length !== 2) {
+    return { error: '请输入两个汉字，不能多也不能少。' };
+  }
 
-    /** 将八卦数字转为3位二进制数组（从下到上） */
-    function trigramToBits(num) {
-      var mapToBin = {1:7,2:6,3:5,4:4,5:3,6:2,7:1,8:0};
-      var bin = mapToBin[num];
-      return [(bin>>2)&1, (bin>>1)&1, bin&1]; // [上爻, 中爻, 初爻]
-    }
+  // 获取笔画
+  const stroke1 = cnchar.stroke(text[0]);
+  const stroke2 = cnchar.stroke(text[1]);
 
-    /** 绘制6爻（本卦 + 变卦，支持动爻高亮） */
-    function renderYaoLines(upperNum, lowerNum, changedUpperNum, changedLowerNum, yaoNum) {
-      var upperBits = trigramToBits(upperNum);
-      var lowerBits = trigramToBits(lowerNum);
-      var changedUpperBits = trigramToBits(changedUpperNum);
-      var changedLowerBits = trigramToBits(changedLowerNum);
-      var allBits = upperBits.concat(lowerBits);  // [上3, 下3] 从第6爻到第1爻
-      var allChanged = changedUpperBits.concat(changedLowerBits);
-      var container = document.getElementById('yaoLines');
-      var changedContainer = document.getElementById('changedYaoLines');
-      if (!container) return;
-      var html = '', changedHtml = '';
-      for (var i = 0; i < 6; i++) {
-        var yaoIdx = 6 - i; // 从上到下：6,5,4,3,2,1
-        var bit = allBits[i];
-        var changedBit = allChanged[i];
-        var isYang = bit === 1;
-        var isChangedYang = changedBit === 1;
-        var isMoving = (yaoIdx === yaoNum);
-        // 本卦爻
-        html += '<div class="yao-line' + (isYang ? '' : ' yao-yin') + '">';
-        html += '<span class="yao-num">' + '六五四三二一'[5-yaoIdx+1] + '</span>';
-        if (isYang) {
-          html += '<div class="yao-bar' + (isMoving ? ' highlight' : '') + '"></div>';
-        } else {
-          html += '<div class="yao-bar' + (isMoving ? ' highlight' : '') + '"></div><div class="yao-bar-gap"></div><div class="yao-bar' + (isMoving ? ' highlight' : '') + '"></div>';
-        }
-        html += '<span class="yao-tag' + (isMoving ? ' show' : '') + '">✦ 动爻</span>';
-        html += '</div>';
-        // 变卦爻
-        changedHtml += '<div class="yao-line' + (isChangedYang ? '' : ' yao-yin') + '">';
-        changedHtml += '<span class="yao-num">' + '六五四三二一'[5-yaoIdx+1] + '</span>';
-        if (isChangedYang) {
-          changedHtml += '<div class="yao-bar"></div>';
-        } else {
-          changedHtml += '<div class="yao-bar"></div><div class="yao-bar-gap"></div><div class="yao-bar"></div>';
-        }
-        changedHtml += '</div>';
-      }
-      container.innerHTML = html;
-      changedContainer.innerHTML = changedHtml;
-    }
+  if (stroke1 === 0 || stroke2 === 0 || stroke1 === undefined || stroke2 === undefined) {
+    return { error: '暂不支持该字符，请替换其他汉字。' };
+  }
 
-    /** 硬核天机应期：结合旬空、日辰、动爻五行推算 */
-    function calcTiming(result) {
-      var yao=result.yaoNum, shiChen=result.shiChen, dayGZ=result.dayGZ, xunKong=result.xunKong;
-      var dayZhi=dayGZ.zhi, dayZhiIdx=dayGZ.zhiIdx;
-      var yaoWuxing=['土','水','木','木','土','火'][yao-1]; // 初爻土,二爻水,三爻木,四爻木,五爻土,上爻火（简易分配）
-      var k1=xunKong.zhi1, k2=xunKong.zhi2, k1Idx=xunKong.zhi1Idx, k2Idx=xunKong.zhi2Idx;
-      var yaoZhiMap=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-      var yaoZhi=yaoZhiMap[(dayZhiIdx+yao*2)%12];
+  // 转卦数
+  const num1 = strokeToTrigram(stroke1);
+  const num2 = strokeToTrigram(stroke2);
 
-      // 判断动爻五行是否落旬空
-      var yaoInKong = false, targetInKong = false;
-      // 旬空地支对应的五行：寅卯木，巳午火，申酉金，亥子水，辰戌丑未土
-      var kongWuxing = '';
-      if((k1Idx===2&&k2Idx===3)||(k1Idx===3&&k2Idx===2)) kongWuxing='木';
-      else if((k1Idx===4&&k2Idx===5)||(k1Idx===5&&k2Idx===4)) kongWuxing='火';
-      else if((k1Idx===6&&k2Idx===7)||(k1Idx===7&&k2Idx===6)) kongWuxing='火'; // 午未
-      else if((k1Idx===8&&k2Idx===9)||(k1Idx===9&&k2Idx===8)) kongWuxing='金';
-      else if((k1Idx===10&&k2Idx===11)||(k1Idx===11&&k2Idx===10)) kongWuxing='水'; // 戌亥
-      else if((k1Idx===0&&k2Idx===1)||(k1Idx===1&&k2Idx===0)) kongWuxing='水'; // 子丑
-      else kongWuxing='土'; // 辰巳为土/火
+  // 第一个字 → 下卦(内卦), 第二个字 → 上卦(外卦)
+  const lowerNum = num1;
+  const upperNum = num2;
 
-      if(yaoWuxing===kongWuxing) yaoInKong=true;
+  const lowerTri = TRIGRAM[lowerNum];
+  const upperTri = TRIGRAM[upperNum];
 
-      var result='';
-      if(yaoInKong){
-        result='卦逢旬空（<span class="highlight-red">'+k1+'、'+k2+'</span>），事情目前处于搁置、隐瞒或胶着状态，看似平静实则暗流未动。根据时空交织，必须等到出空之日即接下来的 <span class="highlight-red">'+k1+'日</span> 或 <span class="highlight-red">'+k2+'日</span>，或者冲空之日（<span class="highlight-red">'+getLiuChong(k1Idx)+'日</span>），此事才会迎来真正实质性的破局。';
-      }else{
-        // 根据刑冲合害推算吉日
-        var chongZhi=getLiuChong(dayZhiIdx);
-        var heZhi=getLiuHe(dayZhiIdx);
-        var yaoStart=(dayZhiIdx+yao) % 12;
-        var yaoJiri=diZhi[yaoStart], yaoJiri2=diZhi[(yaoStart+6)%12];
-        result='此卦机缘已动。日辰<span class="highlight-red">'+dayZhi+'</span>与动爻第<span class="highlight-red">'+'一二三四五六'[yao-1]+'爻</span>的能量正在交感。接下来应重点关注 <span class="highlight-red">'+yaoJiri+'日</span>（合日）或 <span class="highlight-red">'+yaoJiri2+'日</span>（冲日），届时将有关键性的消息或转折出现。请保持敏锐，静候天时应期。';
-      }
-      return result;
-    }
+  // 六十四卦键名: 上卦数字 + 下卦数字
+  const key = '' + upperNum + lowerNum;
+  const hexagram = HEXAGRAM_DATA[key];
+  if (!hexagram) {
+    return { error: '未找到对应卦象，请检查输入。' };
+  }
 
-    // ================================================================
-    //  七、UI 交互逻辑
-    // ================================================================
-    var btn=document.getElementById('btnDivine'),taijiOverlay=document.getElementById('taijiOverlay'),
-        resultArea=document.getElementById('resultArea'),lunarDisplay=document.getElementById('lunarDisplay'),
-        shichenDisplay=document.getElementById('shichenDisplay'),bodyTag=document.getElementById('bodyTag'),
-        useTag=document.getElementById('useTag'),shengkeTag=document.getElementById('shengkeTag'),
-        shengkeText=document.getElementById('shengkeText'),
-        hexagramName=document.getElementById('hexagramName'),
-        yaoHint=document.getElementById('yaoHint'),
-        changedArea=document.getElementById('changedArea'),changedName=document.getElementById('changedName'),
-        classicInterp=document.getElementById('classicInterp'),plainInterp=document.getElementById('plainInterp'),
-        timingBox=document.getElementById('timingBox'),timingBody=document.getElementById('timingBody'),
-        oracleOverlay=document.getElementById('oracleOverlay'),oracleBody=document.getElementById('oracleBody'),oracleBtn=document.getElementById('oracleBtn'),
-        ganzhiDisplay=document.getElementById('ganzhiDisplay'),
-        tabBtns=document.querySelectorAll('.tab-btn');
-    var currentScene='overall',lastResult=null;
-    var wuxingSceneMap={yongKeTi:'career',tiKeYong:'wealth',tiShengYong:'wealth',yongShengTi:'love',biHe:'overall'};
+  // 动爻
+  const total = stroke1 + stroke2;
+  const yaoRaw = total % 6;  // 0~5
+  const yaoIndex = yaoRaw === 0 ? 5 : yaoRaw - 1; // 转为数组索引: 余数1→初爻(0), 余数0→上爻(5)
+  const yaoDisplay = yaoRaw === 0 ? '上爻' : YAO_NAMES[yaoRaw - 1];
 
-    /** 切换到指定标签页 */
-    function switchTab(scene){
-      tabBtns.forEach(function(x){x.classList.remove('active');});
-      tabBtns.forEach(function(x){
-        if(x.getAttribute('data-scene')===scene){x.classList.add('active');currentScene=scene;}
-      });
-      if(lastResult){renderPlainText(lastResult, lastResult.changedKey);}
-    }
+  // 本卦六爻
+  const originalLines = buildHexagramLines(upperNum, lowerNum);
 
-    tabBtns.forEach(function(b){b.addEventListener('click',function(){
-      tabBtns.forEach(function(x){x.classList.remove('active');});
-      b.classList.add('active');currentScene=b.getAttribute('data-scene');
-      if(lastResult){renderPlainText(lastResult, lastResult.changedKey);}
-    });});
+  return {
+    text,
+    stroke1,
+    stroke2,
+    num1,
+    num2,
+    lowerNum,
+    upperNum,
+    lowerName: lowerTri.name + '(' + lowerTri.nature + ')',
+    upperName: upperTri.name + '(' + upperTri.nature + ')',
+    hexagram,
+    key,
+    yaoDisplay,
+    yaoIndex,
+    total,
+    originalLines,
+    upperTri,
+    lowerTri,
+  };
+}
 
-    btn.addEventListener('click',function(){
-      var inputVal=document.getElementById('intentInput').value.trim();
-      if(!inputVal){
-        document.getElementById('toastOverlay').classList.add('active');
-        return;
-      }
-      // 纯数字则直接取数字，否则取字符串长度
-      var N = /^\d+$/.test(inputVal) ? parseInt(inputVal) : inputVal.length;
-      // ── 防刷禁用：按钮失能 + 文字变更 ──
-      btn.disabled=true;
-      btn.classList.add('loading');
-      taijiOverlay.classList.add('active');
-      setTimeout(function(){
-        var now=new Date(),result=performDivination(now, N);
-        lastResult=result;taijiOverlay.classList.remove('active');
-        lunarDisplay.textContent=result.lunarStr;
-        shichenDisplay.textContent=result.shiChen.name;
-        ganzhiDisplay.textContent=result.ganZhiDisplay;
-        var ti=result.tiGua,yong=result.yongGua,sk=result.shengkeInfo;
-        bodyTag.textContent='体 · '+ti.name+ti.wuxing;
-        useTag.textContent='用 · '+yong.name+yong.wuxing;
-        shengkeTag.textContent=sk.tag;shengkeTag.className='tag tag-shengke '+sk.cls;
-        shengkeText.textContent=sk.text;
-        hexagramName.textContent=result.hexagramName;
-        document.getElementById('subDetailText').textContent='上'+result.upperGua.attr+'下'+result.lowerGua.attr;
-        document.getElementById('subDetailText').previousElementSibling.textContent=result.upperGua.symbol;
-        document.getElementById('subDetailText').nextElementSibling.textContent=result.lowerGua.symbol;
-        document.getElementById('changedSubText').textContent='上'+result.changedUpperGua.attr+'下'+result.changedLowerGua.attr;
-        document.getElementById('changedSubText').previousElementSibling.textContent=result.changedUpperGua.symbol;
-        document.getElementById('changedSubText').nextElementSibling.textContent=result.changedLowerGua.symbol;
-        yaoHint.textContent='— '+result.yaoDesc+' —';
+// ============================================================
+//  7. DOM 渲染
+// ============================================================
+function displayResult(result) {
+  const errorEl = document.getElementById('errorMsg');
+  const resultArea = document.getElementById('resultArea');
 
-        // 绘制六爻 + 动爻高亮
-        renderYaoLines(result.upperNum, result.lowerNum, result.changedUpperNum, result.changedLowerNum, result.yaoNum);
-        changedName.textContent=result.changedHexagramName;changedArea.style.display='block';
-        var textKey = result.changedKey;
-        var classicText=getClassicText(textKey);
-        classicText=classicText.replace(/<keyword>/g,'<span class="keyword">').replace(/<\/keyword>/g,'</span>');
-        classicInterp.innerHTML=classicText;
+  if (result.error) {
+    errorEl.textContent = result.error;
+    resultArea.classList.remove('show');
+    return;
+  }
 
-        timingBody.innerHTML=calcTiming(result);
-        timingBox.style.display='block';
-        switchTab('overall');
+  errorEl.textContent = '';
+  resultArea.classList.add('show');
 
-        document.getElementById('shareLunar').textContent=result.lunarStr;
-        document.getElementById('shareShichen').textContent=result.shiChen.name;
-        document.getElementById('shareHexagramName').textContent=result.hexagramName;
-        document.getElementById('shareHexagramSub').textContent='上'+result.upperGua.attr+'下'+result.lowerGua.attr;
-        document.getElementById('shareYao').textContent=result.yaoDesc;
-        document.getElementById('shareShengke').textContent=sk.tag+' — '+sk.text;
+  // 信息表格
+  const grid = document.getElementById('resultGrid');
+  grid.innerHTML = `
+    <div class="result-item">
+      <div class="label">第一字</div>
+      <div class="value">${result.text[0]} <span class="tag">${result.stroke1}画</span></div>
+    </div>
+    <div class="result-item">
+      <div class="label">第二字</div>
+      <div class="value">${result.text[1]} <span class="tag">${result.stroke2}画</span></div>
+    </div>
+    <div class="result-item">
+      <div class="label">总笔画</div>
+      <div class="value">${result.total} <span class="tag">动爻：${result.yaoDisplay}</span></div>
+    </div>
+    <div class="result-item">
+      <div class="label">下卦（内卦）</div>
+      <div class="value">${result.lowerName}</div>
+    </div>
+    <div class="result-item">
+      <div class="label">上卦（外卦）</div>
+      <div class="value">${result.upperName}</div>
+    </div>
+    <div class="result-item">
+      <div class="label">本卦</div>
+      <div class="value">${result.hexagram.name}</div>
+    </div>
+  `;
 
-        // 弹窗先行：传入用户输入原文，用于丝滑缝合
-        oracleBody.innerHTML=generateOracleText(result, inputVal);
-        oracleOverlay.classList.add('active');
-        btn.classList.remove('loading');btn.disabled=false;
-      },1500);
-    });
+  // 卦名
+  document.getElementById('originalName').textContent = result.hexagram.name;
 
-    /** 天机弹窗关闭：揭示底层结果 */
-    oracleBtn.addEventListener('click',function(){
-      oracleOverlay.classList.remove('active');
-      resultArea.classList.add('visible');
-    });
+  // 六爻图
+  renderYao('originalYao', result.originalLines, result.yaoIndex);
 
-    function renderPlainText(result, textKey){
-      var k = textKey || result.changedKey || result.key;
-      var t=getSceneText(k,currentScene);
-      t=t.replace(/<keyword>/g,'<span class="keyword">').replace(/<\/keyword>/g,'</span>');
-      t=t.replace(/【(.+?)】/g,'<span class="section-label">【$1】</span>');
-      var paras=t.split(/\n\n/g);
-      var cards='';
-      for(var i=0;i<paras.length;i++){
-        var p=paras[i].trim();
-        if(p){cards+='<div class="card-para"><p>'+p+'</p></div>';}
-      }
-      // 综合运势下追加引导提示
-      if(currentScene==='overall'){
-        cards+='<div class="overall-hint"><span class="hint-icon">☯</span><span class="hint-text">当下磁场已定，点击上方其他标签（财富／情感／事业），可自主窥探具体天机...</span></div>';
-      }
-      plainInterp.innerHTML=cards;
-    }
+  // 断语
+  const yaos = JUDGMENTS[result.key];
+  if (yaos) {
+    document.getElementById('judgmentLabel').textContent = '▎' + YAO_NAMES[result.yaoIndex] + '动 · 断语';
+    document.getElementById('judgmentText').textContent = yaos[result.yaoIndex];
+  } else {
+    document.getElementById('judgmentLabel').textContent = '爻辞';
+    document.getElementById('judgmentText').textContent = '暂无断语。';
+  }
+}
 
-    /** 生成天机弹窗深度剖析（200+字，精神／财务／情感／身体大杂烩） */
-    /**
-     * 多维矩阵随机重组引擎
-     * 5种体用生克 × 4个维度(mental/money/love/body) × 每维度5+句话
-     * 每次起卦随机抽取 + N值扰动 → 真正千人千面
-     */
-    var oracleCorpus = {
-      // ────── 用生体 / 大吉 ──────
-      daJi:{
-        mental:[
-          '你最近正在经历一场无声的能量复苏。那些之前让你辗转反侧的问题虽然没有完全消失，但你发现自己已经不像以前那样容易被它们拖入深渊了。你开始能够抽离出来看待困境，这种连你自己都觉得意外的变化说明你的内在正在变强。',
-          '有一种你看不见的好运气正在朝你靠拢。它不需要你刻意做什么，只需要你停止自我怀疑。你最近是不是发现那些以前想不通的事情突然有了答案？那并不是巧合，而是你的能量频率正在与更好的可能性对齐。',
-          '你最近的直觉变得异常敏锐。你越来越能第一时间感知到谁在真心对你、哪个机会值得把握。这种状态下你做出的判断往往比深思熟虑后的决定更准确。信任你的第一直觉，它正在替你过滤掉那些不属于你的人和事。',
-          '你进入了一个正向循环的入口——你做对了一个选择，这个选择带来了好的结果，好的结果让你更有信心，信心又让你做出下一个更对的选择。你现在要做的就是不要打断这个循环，不要在它刚开始加速的时候就因为恐惧而踩刹车。',
-          '你最近的内心变得前所未有的清明。那些以前让你纠结到失眠的选择题现在你一眼就能看清答案不是因为你变聪明了，而是因为你已经攒够了经历，那些经历转化成了你现在的判断力。',
-        ],
-        money:[
-          '在做事层面你最近明显感觉到一股顺畅感。那些以前需要反复沟通才能推进的事情现在好像突然找到了出口，你甚至不必费太多口舌该配合的人就开始自动配合了。这种感觉让你既惊喜又有些不真实。',
-          '财运方面出现了积极的信号。至少你担心的那笔钱并没有你想象的那么糟糕。有些你以为会亏本的项目正在慢慢回血，有些你以为收不回来的款项也开始有了眉目。你值得拥有这些转机。',
-          '你最近在工作和副业上的效率大幅提升。以前需要大半天才能完成的事情现在几个小时就能搞定。这种效率红利让你有了更多时间去思考和规划下一步，而不是被琐事淹没。',
-          '你最近在一个你已经快放弃的事情上突然看到了转机。那些你以为是死胡同的路其实只是还没走到拐角处。坚持下去，这个拐角就在你下一步的位置。最快的那条路往往是你已经走了一大半的那条。',
-          '好的人脉正在自动向你聚拢。你会发现最近约你见面的人变多了，找你合作的机会也变多了。这些人中隐藏着对你未来非常重要的关键人物。不要因为疲惫而拒绝社交。',
-        ],
-        love:[
-          '值得留意的是关系层面。你最近可能因为事情变顺了反而有些忽略身边人的感受。那些你以为已经解决的问题其实只是被好运气暂时盖住了。趁着能量正向的时候去修复那些被你搁置的关系会事半功倍。',
-          '你最近在人际关系中变得更有魅力了。不是因为你的外在改变了，而是因为你内心的安定感在向外辐射。一个内心安定的人自然而然会吸引周围的注意力。这种吸引力不需要任何技巧。',
-          '有一层你之前没注意到的隔膜正在自动消融。可能是你跟某个家人的关系、也可能是你跟某位老友之间的误解。你不需要刻意去谈什么，时间已经替你抚平了那些裂缝。你只需要在对方走近的时候不要转身离开就好。',
-          '你最近可能收到一条意料之外的消息——来自一个你没想到会联系你的人。不要急着判断对方的意图，先听听他想说什么。有些关系的修复不需要任何仪式感只需要一颗愿意倾听的心。',
-          '你身边的某个人其实一直在默默地关注你的动态。你以为对方不在意你了，其实他只是不知道该怎么开口。最近的磁场变化给了你们一个重新连接的窗口。如果你心里也有那么一个人不妨主动迈出那一步。',
-        ],
-        body:[
-          '你的睡眠质量在慢慢恢复。虽然偶尔还会在凌晨醒来，但你已经不再像之前那样在黑暗中独自恐慌到天亮。你的身体正在跟上你内心的变化节奏。给它一点时间它会还你一个更清醒的白天。',
-          '你最近的肩颈和头部感到前所未有的轻松。那些长期积累的紧张感正在一点一点地释放。你会发现呼吸变得更深了，走路也变得更有力了。身体比你更早知道一切在变好。',
-          '你最近会突然产生一种很想做某件事的冲动——可能是运动、可能是下厨、也可能是整理房间。这种冲动的背后是你的能量场在清理旧的东西为新的东西腾出空间。跟上这股冲动身体会给你正向的反馈。',
-          '你的食欲和消化系统正在恢复正常。之前那种要么暴饮暴食要么完全没胃口的两极状态已经过去了。当你的身体开始主动渴求营养而不是刺激性的食物的时候说明你的内在正在回归平衡。',
-          '你最近会发现自己不需要闹钟也能在清晨自然醒来。醒来之后头脑清醒而不是昏昏沉沉。这是你身体自我修复能力在恢复的信号。你的能量正在从消耗模式切换到充电模式。',
-        ],
-      },
-      // ────── 用克体 / 有压力 ──────
-      yaLi:{
-        mental:[
-          '你最近明显感觉像被困在一个透明的玻璃罩里。你知道问题出在哪里也知道该怎么做，但就是有一股无形的力量在阻止你行动。这种无力感让你越来越焦躁以至于你对身边的小事也失去了耐心。',
-          '你最近的思绪就像一台停不下来的老旧电脑——开了太多的程序每个都在运转但哪个都打不开。你同时担心着工作上的截止日期、家庭里的琐事、还有那些你自己也说不清的焦虑。唯一能做的就是关机重启几天。',
-          '你最近陷入了反复回顾过去的陷阱。你总是在想如果当初做了另一个选择现在会不会不一样。这种反事实思维正在消耗你现在行动的能量。过去已经无法改变但你对未来的每一个决定都在改写你未来的过去。',
-          '你最近的完美主义倾向变得越来越严重。你总想把所有事情都做到最好才愿意拿出手，但你同时也发现自己什么都做不完了。完美主义不是追求卓越它是恐惧失败的伪装。允许自己做一个完成者而不是完美者。',
-          '你最近有一种强烈的想逃离一切的冲动。想去一个没人认识你的地方重新开始。这不是软弱而是你的潜意识在告诉你你给自己背负的东西已经超过了你能承受的极限。减掉一些担子不是认输是自救。',
-        ],
-        money:[
-          '在财务层面你近期承受着比平时更大的压力。那些本应该到账的钱迟迟没到计划外的支出却接二连三地出现。你最需要的是稳住现金流而不是病急乱投医。大部分财务困境不是收入的问题而是支出的问题。',
-          '你最近在钱的问题上变得格外敏感。每次打开账单软件都需要心理准备。这种焦虑其实不是因为你快破产了而是因为你失去了对财务的掌控感。重新做一次预算哪怕只是粗略的也能让你找回一些安全感。',
-          '你最近面临一个跟钱有关的选择题——可能是借钱给别人可能是被借钱也可能是某个你犹豫要不要继续投入的投资。在这个压力期最理智的做法是拖延任何重大的财务决定。不要让焦虑替你做决定。',
-          '你最近的每一笔支出都比平时更让你肉疼。不是因为你真的花多了而是因为你心里的不安全感被放大了。试着把这笔账分开来看哪些是必要的哪些是情绪消费。你会在分类的过程中发现自己比想象中更有控制力。',
-          '你最近可能因为压力大而开始用花钱来缓解情绪——买一些你其实不需要的东西吃一些你明知道不健康的食物。这种发泄式的消费不会缓解你的压力反而会让你在第二天早上看着账单更加焦虑。',
-        ],
-        love:[
-          '关系层面你现在最不需要的就是讨好任何人。你已经在承受足够的压力了不要把别人的情绪也背到自己身上。有些人的期待你不需要满足有些人的评价你不需要在意。你现在最该做的是优先照顾自己的感受。',
-          '你最近在人际关系中变得越来越沉默。不是因为你不喜欢对方了而是因为你连说话的能量都没有了。真正的朋友不需要你每次都热情洋溢他们需要的是你告诉他们你现在需要的是被倾听而不是被建议。',
-          '你可能正在经历一种被孤立的感觉。不是真的没有人陪你而是你觉得没有人能真正理解你现在的处境。这种孤独感其实是成长的信号——当你走到了一个新的阶段旧的环境自然就不再适合你了。',
-          '你最近跟家人的沟通格外容易擦枪走火。一句普通的问候都能被解读为指责。请你试着告诉家人你最近压力很大需要他们的支持而不是评判。把话说出来对方才能知道怎么帮你。',
-          '你最近的社交欲望降到了冰点。推掉了饭局不想回消息连最亲近的朋友也不想见。这不是抑郁这只是你的心理防御机制在帮你节省能量。给自己一段社交假期不需要解释。',
-        ],
-        body:[
-          '你的睡眠正在经历严重的碎片化——不是睡不着而是睡得很浅任何一点响动都能把你惊醒。你的大脑即使在休息的时候也在高速运转反复回放白天那些让你感到挫败的瞬间。请你务必把健康放在第一位现在不是你硬撑的时候。',
-          '你最近的肩颈和腰背在不间断地发出抗议。那些长期伏案积累的僵硬正在变成刺痛。你的身体在用痛感提醒你它的存在。如果你忽略了这些信号它会用更大的声音让你停下来。',
-          '你最近的消化系统变得格外敏感。不是胃胀就是没胃口你的肠道正在反映你心理上的紧张状态。试着在吃饭的时候远离手机和工作专注于眼前的食物这个简单的动作能帮你恢复消化系统的正常节律。',
-          '你最近在早上起床时感到前所未有的疲惫。即使睡了足够的时间依然觉得身体像被灌了铅一样沉重。不是你的睡眠出了问题而是你的神经系统一直处于备战状态从来没有真正放松过。你需要主动给自己创造放松的时间。',
-          '你最近频繁地出现不明原因的头疼和肌肉酸痛。这是你的身体在替你分担那些你心理上无法消化的压力。身体是你最忠诚的盟友它用你能理解的方式告诉你该停下来了。',
-        ],
-      },
-      // ────── 体生用 / 泄气 ──────
-      xieQi:{
-        mental:[
-          '你最近是不是感觉做什么都提不起劲？不是你的能力退步了而是你的内心能量已经严重透支了。你一直在照顾周围所有人的情绪但你忘了给自己充电。你现在最需要的不是更多的努力而是彻底的放空。',
-          '你最近有一种说不清道不明的疲惫感。不是身体累了而是心累了。你发现自己对以前热爱的事情失去了兴趣对以前在乎的人失去了耐心。这不是你变了而是你太久没有为自己活了。',
-          '你最近的注意力变得极度涣散。你同时想做很多事情但哪一件都坚持不了几分钟。这不是执行力的问题而是你的电池已经亮红灯了你需要的不是更多的任务清单而是一段完全的空闲时间。',
-          '你最近开始自我怀疑。你在想自己是不是不够好、是不是选错了路、是不是配不上现在拥有的一切。这种自我否定的声音不是你真实的声音它是你长期付出后的心理反弹。',
-          '你最近的决策力严重下降。以前几分钟就能决定的事情现在需要反复纠结一整天。因为你的内心能量已经不足以支撑你做决定了每一个选择都像是在透支你最后的余额。',
-        ],
-        money:[
-          '在做事方面你最近最大的困境是付出了看不到回报。你完成了一个任务马上又有新的任务砸过来你帮了一个人忙这个人又带来下一个麻烦给你的能量正在被这种无底洞式的索取耗尽。',
-          '你最近在财务上有一种被掏空的感觉。不是真的破产了而是你觉得自己的付出和收入不成正比。如果你觉得自己一直付出却没有得到应有的回报现在是你重新谈判价格或调整投入的时候了。',
-          '你最近的赚钱效率明显下降。同样的工作量换来的收入在缩水或者你的客户越来越难伺候花在沟通上的时间远远超过了做事的时间。这时候你需要做的是优化而不是更努力地重复低效的模式。',
-          '你最近可能因为觉得自己太累了而开始花钱犒劳自己结果却发现犒劳之后的内疚感让心情更差了。这不是在帮你充电而是在透支你的明天来补偿今天。试着用免费的休息来犒劳自己效果比消费好得多。',
-          '你最近在合作中感觉被占了便宜。你做了百分之七十的工作但只得到了百分之三十的回报。这时候直接谈利益分配比憋着委屈要大度得多。你的付出值得被公平对待。',
-        ],
-        love:[
-          '关系层面你最近可能感到一种失衡。你一直在付出但对方似乎把你的好当成了理所当然。你是不是已经很久没有感受到被关心的感觉了？请试着停止单方面的付出把那些能量先收回来对自己好。',
-          '你最近在关系中变成了倾听者和照顾者。你一直在接收别人的情绪垃圾但自己的情绪却无处安放。这不是一段健康的关系应该有的样子。好的关系是互相滋养而不是单方面的燃烧。',
-          '你最近开始回避那些需要情感投入的社交。因为你的情感账户已经空了。这时候不要强迫自己去社交告诉身边信任的人你需要充电。那些真正在意你的人会理解的。',
-          '你最近在感情中感到一种深深的疲惫。不是因为不爱了而是因为你在爱里太用力了。试着后退一步把精力放一些在自己身上。那些需要你不断追逐的关系不是你不够好而是对方根本不想走向你。',
-          '你最近对人际交往变得异常敏感。别人的一个眼神一句话你都能在心里翻出三层含义。这种过度解读正在大量消耗你的社交能量。试着钝感一些别人的大多数言行跟你没有关系。',
-        ],
-        body:[
-          '你的睡眠质量没有问题但醒来之后依然觉得疲惫。因为你的梦里也在处理白天积压的情绪垃圾。一觉醒来比睡前还累这是你的潜意识在加夜班清理你白天来不及消化的情绪。',
-          '你最近经常在下午三四点的时候感到一阵莫名的疲惫。眼皮发沉注意力无法集中。这是你的身体在提醒你你白天的能量分配出现了问题。试着中午给自己十五分钟的完全放空。',
-          '你最近的免疫系统在下降。不是大病就是这里不舒服那里不得劲。因为你的能量优先供应给了工作和他人没有留下足够的能量来维持免疫系统的正常运转。休息不是偷懒是维持健康的必要投资。',
-          '你最近对食物的态度走向了两极——要么暴饮暴食要么完全没胃口。这是情绪在控制你的饮食行为而不是你的身体在发出信号。试着在吃饭的时候问自己我的身体需要什么而不是我的情绪需要什么。',
-          '你最近的呼吸变浅了。你有没有发现自己在不自觉地叹气？那是你的身体在用叹气的方式帮你释放那些积累的压力。试着每天做几次深呼吸这是最简单也最有效的能量补充方式。',
-        ],
-      },
-      // ────── 比和 / 平稳 ──────
-      pingWen:{
-        mental:[
-          '你的生活目前没有大起大落但也缺少让你心跳加速的波澜。一切都正常运转着但只有你自己知道在这种平静之下你的内心已经很久没有真正兴奋过了。你开始怀念那种为某件事热血沸腾的感觉。',
-          '你最近发现自己变得异常理性。以前会让你激动的事情现在只能让你点点头。这不是成熟而是你的感性部分太久没有被激活了。试着去做一件你没有做过的事情哪怕很小也能帮你打破这种过于平稳的状态。',
-          '你最近的内心状态用一种颜色来形容就是灰色——不是黑色也不是白色就是那种不痛不痒的中性色。你不会感到痛苦但也感受不到快乐。这种低情绪状态比低谷更危险因为它让你误以为这就是生活的常态。',
-          '你最近开始频繁地回忆过去。你怀念以前那个更容易开心更容易激动的自己。你不是老了你是太久没有给自己创造新的记忆了。你的大脑需要新鲜刺激来重新激活情绪系统。',
-          '你最近有一种说不清的焦虑——不是因为某件具体的事情而是因为没有事情发生。你的内心习惯了应对危机当你终于不用应对危机的时候反而不知道该怎么放松了。这是一种典型的长期高压后的空虚感。',
-        ],
-        money:[
-          '在做事方面你最近的状态算是平稳但没有大的突破也没有大的失误，按部就班地完成每一天的工作。这种状态的好处是不需要承受太大的压力但坏处是你开始感到某种隐形的无聊和倦怠。',
-          '财富上没有意外之喜也没有意外之灾。正是这种不痛不痒的状态最容易让人麻痹。你可能在不知不觉中错过了几个本可以抓住的小机会。试着每天留出半小时关注一下行业动态和市场变化。',
-          '你最近的消费习惯变得异常稳定。没有大额的冲动消费也没有刻意省钱。这种财务上的稳定状态其实是你前一段努力的成果。但如果一直这样稳定下去而没有任何增长你的购买力实际上是在慢慢缩水的。',
-          '你最近的工作收入稳定但副业和额外收入几乎没有。你并不是没有时间只是没有动力去开发新的收入来源。你可能需要一个外部的刺激来打破这种稳定到无聊的状态。',
-          '你最近在财务上处于一种观望状态。你看到了几个可能的机会但没有一个让你下定决心去尝试。这种观望不是谨慎而是动力不足。等到你真的想行动的时候那个窗口期可能已经过了。',
-        ],
-        love:[
-          '关系层面你现在处于一种舒适但缺乏深度的状态。你和身边的人相处融洽但也流于表面。那些能让你感到被理解和被看见的时刻正在变少。你不妨主动抛出一个真正在乎的话题看看对方的反应。',
-          '你最近的感情生活可以用一个词来形容——温吞。不会吵架但也不会心动。这种状态的好处是安全但坏处是你开始怀疑这段关系到底是不是你想要的。平淡不等于无趣也许你只是需要制造一点新鲜感。',
-          '你最近在社交中变得毫无攻击性。你跟谁都能聊但跟谁都不深。这种好人缘其实是你在无意识地跟所有人保持安全距离。试着对某一个人卸下一点点防备看看对方的反应。',
-          '你最近越来越不喜欢麻烦别人即使是很小的事情你也宁愿自己做。这种独立的背后是你对关系的失望。你习惯了不被回应所以干脆不再求助。但人的天性是需要连接的偶尔依赖别人不是软弱。',
-          '你最近在感情中陷入了一种食之无味弃之可惜的状态。你不知道是该再努力一下还是该放手。这种悬而未决的状态最消耗人的能量。给自己一个明确的期限在这个期限内全力试一次不论结果。',
-        ],
-        body:[
-          '你最近发现自己的睡眠很规律但梦却变得少了。这不是好事而是你的内心激情在减退的信号。没有梦的睡眠就像没有调料的菜能填饱肚子但缺乏滋味。你的潜意识正在通过减少梦境来表达生活的单调。',
-          '你最近的身体没有任何明显的不适但也感觉不到充满活力。每天都差不多没有特别好也没有特别差。这种状态最容易被忽视但它其实是你身体在告诉你它需要一些新的刺激来重新激活。',
-          '你最近的精力水平呈一条平稳的直线。没有高峰也没有低谷。这种稳定性让你可靠但也让你失去了那种突然涌现的创造力和冲劲。试着做一次高强度的运动打破这种平稳的节奏。',
-          '你最近的饮食习惯变得极其规律。每天吃差不多的东西在差不多的时间。这种规律对健康有好处但也会让你的生活失去一些仪式感和乐趣。偶尔给自己做一顿特别的饭菜或者去一家新餐厅试试。',
-          '你最近对运动的热情明显降温了。不是不知道运动对身体好而是觉得每天的例行公事没什么意思。换一种你从未试过的运动方式——跳舞攀岩哪怕是公园里快走新鲜感会重新激活你的运动动力。',
-        ],
-      },
-      // ────── 默认 / 调整期 ──────
-      other:{
-        mental:[
-          '你正处于一个微妙的调整期。表面看起来一切照旧但你的内心已经对很多事情有了不同于以往的判断。你开始重新审视那些你以前深信不疑的选择这种转变是你经历了足够多的事情之后自然而然的结果。',
-          '你最近陷入了一种既想改变又害怕改变的矛盾中。你很清楚现在的生活不是你想要的样子但你又不确定下一步该往哪里走。这种矛盾不是你的优柔寡断而是你在对自己的人生负责的表现。',
-          '你最近开始频繁地在深夜感到一种莫名的清醒。不是失眠而是你的大脑在你安静下来的时候才开始处理那些白天被你忽略的重要信息。那些深夜冒出来的想法值得你记下来它们可能是你潜意识的信号。',
-          '你最近对很多事情的看法发生了微妙但深刻的变化。你以前觉得重要的事情现在觉得没那么重要了你以前不在意的事情反而开始引起你的注意。这种价值观的松动是成长的必经阶段。',
-          '你最近在独处的时候越来越多地思考人生的意义。你开始审视自己的生活轨迹质疑自己一直在追求的东西到底是不是自己真正想要的。这种审视虽然让人不安但它是你走向真正成熟的第一步。',
-        ],
-        money:[
-          '在做事层面你现在最大的挑战是不确定性。你还没看清楚方向路径也还没有完全清晰。你现在不需要急着做出最终决定而是需要尽可能多地收集信息了解选项。好的判断力需要足够的输入。',
-          '你最近的财务状况处于一种混沌状态。说不上好也说不上坏但就是让你心里不踏实。这种不踏实不是因为数字本身而是因为你没有清晰的财务规划。花一个周末把你的账目理清楚你会发现你的焦虑至少减少一半。',
-          '你最近在工作上遇到了一些职业选择的十字路口。你不确定是该在现在的岗位上深耕还是该换个赛道重新开始。在做这个决定之前先问问自己你真正想要什么样的生活方式而不是什么样的职位。',
-          '你最近开始对一些以前完全不了解的领域产生了兴趣。这种兴趣可能看起来跟你的职业毫无关系但它可能是你未来转型的重要线索。花一点时间去探索这些新领域不一定有即时回报但可能有长线的价值。',
-          '你最近在财务上有些小混乱——忘记了一个账单的截止日期漏掉了一个重要的支出记录。这些不是粗心而是你的注意力被太多事情分散了。建立一个简单的财务提醒系统能帮你稳住基本盘。',
-        ],
-        love:[
-          '关系层面你现在可能需要一些独处的时间。你最近是不是发现自己越来越不想社交这不是你的社交能力出了问题而是你的内心正在重新校准你需要的社交密度和质量。那些消耗你的人际关系你正在本能地远离。',
-          '你最近在人际交往中变得越来越挑剔。你不再愿意把时间和精力花在那些可有可无的社交上。这种挑剔不是傲慢而是你的自我价值观在提高。你开始意识到你的时间是宝贵的应该花在值得的人身上。',
-          '你最近发现一些人正在从你的生活中慢慢退场。你们没有争吵也没有误会只是自然而然地从频繁联系变成了偶尔问候。这种散场是正常的生命的每个阶段都会有不同的同行者。',
-          '你最近对一段关系的审视变得越来越冷静。你开始客观地评估这段关系带来的价值而不是被情感牵着走。这种冷静让你感到有些孤独但它是你对自己负责的表现。不是所有关系都值得你投入一生。',
-          '你最近开始渴望一种更深层次的连接。你厌倦了表面的寒暄和客套想要有人能跟你聊聊那些真正重要的话题。试着主动先迈出那一步把你真实的想法说出来看看谁能接住你。',
-        ],
-        body:[
-          '你最近的睡眠变得有些浅因为你的潜意识正在处理认知上的重组。那些入睡前的凌乱思绪其实是你的大脑在整理一天的体验。不要抗拒这些思绪准备一个本子把它们写下来你的大脑会更快安静下来。',
-          '你最近的身体状态在波动。某一天精力充沛某一天又疲惫不堪。这种波动不是问题而是你的身体在进行自我调整。顺势而为在能量高的时候多做一点在能量低的时候多休息一点。',
-          '你最近的饮食习惯出现了一些变化。你开始对某些以前不吃的东西产生兴趣或者对以前爱吃的东西突然失去了兴趣。这些变化看似微不足道但它反映了你的身体需求正在发生变化。',
-          '你最近在清晨醒来的时候会有几秒钟的迷茫——在想自己是谁在哪里今天要做什么。这种短暂的迷失感不是睡眠不足而是你的大脑在重新定位自己。给自己十分钟的晨间缓冲不需要急着跳起来。',
-          '你最近在运动上处于三天打鱼两天晒网的状态。你有一阵子很有运动动力但很快就松懈了。这没关系你的身体正在寻找最适合它的运动节奏而不是遵循一个外部强加的计划。',
-        ],
-      },
-    };
+// ============================================================
+//  8. 事件绑定
+// ============================================================
+const inputEl = document.getElementById('charInput');
+const btn = document.getElementById('submitBtn');
 
-    /** 多维矩阵随机重组 + 古风丝滑过渡词拼接 */
-    function generateOracleText(result, userInput){
-      var name=result.hexagramName;
-      var changedName=result.changedHexagramName;
-      var sk=result.shengkeInfo;
-      var yao=result.yaoNum;
-      var yaoName='一二三四五六'[yao-1];
+function handleSubmit() {
+  const val = inputEl.value;
+  if (!val || val.trim().length === 0) {
+    document.getElementById('errorMsg').textContent = '请输入两个汉字。';
+    document.getElementById('resultArea').classList.remove('show');
+    return;
+  }
+  // 加载动画
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span>起卦';
 
-      var tag=sk.tag;
-      var corpus;
-      if(tag.indexOf('大吉')>=0||tag.indexOf('用生体')>=0) corpus=oracleCorpus.daJi;
-      else if(tag.indexOf('克体')>=0) corpus=oracleCorpus.yaLi;
-      else if(tag.indexOf('泄气')>=0) corpus=oracleCorpus.xieQi;
-      else if(tag.indexOf('平稳')>=0||tag.indexOf('比和')>=0) corpus=oracleCorpus.pingWen;
-      else corpus=oracleCorpus.other;
+  // 微延迟，让 UI 响应
+  setTimeout(() => {
+    const result = performDivination(val);
+    displayResult(result);
+    btn.disabled = false;
+    btn.textContent = '起卦';
+  }, 300);
+}
 
-      var seed = (result.yaoNum * 13 + Date.now()) % 997;
-      function pick(arr){
-        seed = (seed * 59 + 71) % 433;
-        return arr[seed % arr.length];
-      }
+btn.addEventListener('click', handleSubmit);
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handleSubmit();
+});
 
-      var mental = pick(corpus.mental);
-      var money = pick(corpus.money);
-      var love = pick(corpus.love);
-      var body = pick(corpus.body);
+// 输入时自动清除错误
+inputEl.addEventListener('input', (e) => {
+  document.getElementById('errorMsg').textContent = '';
+  document.getElementById('resultArea').classList.remove('show');
+});
 
-      var displayInput = userInput.length > 12 ? userInput.slice(0,12)+'…' : userInput;
-
-      // ── 丝滑过渡词拼接引擎 ──
-      var fullText =
-        '时空定格在这一秒。你刚才输入的「<span class="keyword">'+displayInput+'</span>」在无形中凝聚了你当下的磁场。观象可知：'+mental+
-        '。不仅如此，在磁场的交织下，'+money+
-        '。而在你所关心的关系里，近期也正显现出：'+love+
-        '。同时，时空也借由身体向你发出警示：'+body+'。';
-
-      var guaLine='你当下第<span class="keyword">'+yaoName+'爻</span>的能量正在剧烈涌动，对应变卦<span class="keyword">『'+changedName+'』</span>的卦象已经呈现。动爻所在即天机所向——你心中最挂碍的那件事，答案已经藏在你最近反复思考的方向里。';
-      var closing='你已经走完了最艰难的一段路。当下的能量场正在你的生命中悄然运作，它像滴水穿石一样一点一点改变你生活的方向。你需要的只是再给自己一点时间和耐心。';
-
-      return '<p>'+fullText+'</p><p>'+guaLine+'</p><p>'+closing+'</p>';
-    }
-
-    /** 生成深度身心现状剖析（来人不用问） */
-    function generateDeepAnalysis(result){
-      var sk=result.shengkeInfo.tag;
-      var isDaJi=sk.indexOf('大吉')>=0;
-      var isYouYaLi=sk.indexOf('有压力')>=0||sk.indexOf('克体')>=0;
-      var isXieQi=sk.indexOf('泄气')>=0;
-      var isPingWen=sk.indexOf('平稳')>=0||sk.indexOf('比和')>=0;
-      var isXiaoJi=sk.indexOf('小吉')>=0||sk.indexOf('体克用')>=0;
-      var yao=result.yaoNum;
-      var name=result.hexagramName;
-
-      // 根据体用生克和卦象生成深度身心侧写
-      var lines=[];
-      lines.push('你最近是否常常在深夜辗转反侧？明明身体已经很疲惫了，大脑却像停不下来的马达一样一直在运转。那些白天被各种琐事压下去的焦虑到了晚上全涌了上来——你开始反复回想白天说过的某句话、做过的某个决定，甚至开始怀疑自己的价值。这种深夜内耗正在悄悄地抽干你第二天早上的能量。');
-
-      if(isDaJi){
-        lines.push('你当下的能量场正在向外扩张，你最近走路的速度都变快了，说话的声音也更响了。但这种高能量的背后其实藏着一丝不易察觉的紧绷——你害怕停下来的那一刻，害怕一旦放松就会失去现在这种状态。你的潜意识在用不断的行动来逃避内心的某个不安。深夜醒来时那种莫名的空虚感就是最好的证明。');
-      }else if(isYouYaLi){
-        lines.push('你最近感觉像被困在一个透明的玻璃罩里，看得见外面的世界但就是出不去。你对自己越来越苛刻，连偶尔的放松都带着负罪感。你的身体其实已经在抗议了——偏头痛、肩颈僵硬、消化不良都在提醒你现在的压力已经超过了你能承受的正常阈值。你需要的不是更多的努力，而是真正的休息和放过自己的勇气。');
-      }else if(isXieQi){
-        lines.push('你最近的精力像被什么东西抽走了一样，做任何事都提不起劲。你是不是开始频繁地刷手机到深夜，明知道第二天会后悔但就是控制不住自己？这是一种典型的能量透支后的补偿心理——你在用熬夜来找回白天丢失的属于自己的时间。但这种补偿正在让第二天的你更加疲惫。你需要的是效率的提升而不是时间的延长。');
-      }else if(isPingWen){
-        lines.push('你的生活看起来一切正常——工作照常、社交照常、一切都在正常的轨道上运行。但只有你自己知道，在这种表面的平静之下，你的内心已经很久没有真正兴奋过了。你开始怀念那种为某件事热血沸腾的感觉，甚至开始怀疑这种安稳是不是一种变相的停滞。这不是你的生活出了问题，而是你的内心在渴望新的成长和突破。');
-      }else if(isXiaoJi){
-        lines.push('你最近掌握了一定的主动权，事情在你的掌控之中推进。但你的掌控欲也在悄悄滋长——你开始对身边人的效率感到不满，对计划外的变动感到烦躁。你的标准变得越来越高，不仅是对自己也是对身边的人。这种完美主义的倾向正在让你变得急躁。你最近是不是因为某件小事就对家人或同事发了脾气？那其实不是对方的错，是你给自己的压力太大了。');
-      }
-
-      lines.push('当下的磁场正在你的生命中悄然运作，那些你以为是运气不好的事情其实都有它出现的意义。你不需要立刻找到所有的答案，但你需要开始正视那些你已经逃避了很久的问题。有时候承认自己累了、需要帮助了，比硬撑着假装一切都好更需要勇气。你现在的状态正在被你看不见的能量场深刻地影响着，而你已经迈出了觉察的第一步——这本身就是最重要的改变。');
-      return lines.join('<br><br>');
-    }
-
-    /** 重置白话（空函数，保留兼容） */
-    function revealReset(){}
-
-    /** 保存天机卡片 */
-    function saveCard(){
-      if(!lastResult){alert('请先起卦');return;}
-      var card=document.getElementById('shareCard');
-      // 显示卡片以供截图
-      card.style.position='fixed';card.style.left='50%';card.style.top='50%';
-      card.style.transform='translate(-50%,-50%)';card.style.zIndex='200';
-      // 用html2canvas截图
-      if(typeof html2canvas!=='undefined'){
-        html2canvas(card,{scale:2,backgroundColor:'#f7f2e9',useCORS:true}).then(function(canvas){
-          var link=document.createElement('a');
-          link.download='梅花易数_天机卡片_'+(new Date().toISOString().slice(0,10))+'.png';
-          link.href=canvas.toDataURL('image/png');
-          link.click();
-          // 隐藏卡片
-          card.style.position='fixed';card.style.left='-9999px';card.style.top='0';
-          card.style.transform='';card.style.zIndex='';
-        });
-      }else{
-        alert('截图库加载中，请稍后重试');
-        card.style.position='fixed';card.style.left='-9999px';card.style.top='0';
-        card.style.transform='';card.style.zIndex='';
-      }
-    }
-
-    // 绑定保存按钮
-    document.getElementById('btnSaveCard').addEventListener('click',saveCard);
-
-    // 绑定弹窗关闭
-    document.getElementById('toastBtn').addEventListener('click',function(){
-      document.getElementById('toastOverlay').classList.remove('active');
-    });
-    document.getElementById('toastOverlay').addEventListener('click',function(e){
-      if(e.target===this) this.classList.remove('active');
-    });
-
-    changedArea.style.display='none';
-  </script>
+// 输入法完成后再限制字数，不打断拼音输入
+let isComposing = false;
+inputEl.addEventListener('compositionstart', () => { isComposing = true; });
+inputEl.addEventListener('compositionend', function() {
+  isComposing = false;
+  if (this.value.length > 2) this.value = this.value.slice(0, 2);
+});
+inputEl.addEventListener('input', function() {
+  if (!isComposing && this.value.length > 2) {
+    this.value = this.value.slice(0, 2);
+  }
+});
+</script>
 </body>
 </html>

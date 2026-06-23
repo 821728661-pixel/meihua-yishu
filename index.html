@@ -6,6 +6,7 @@
 <title>二字起卦 · 梅花易数</title>
 <script src="https://cdn.jsdelivr.net/npm/cnchar/cnchar.min.js"></script>
 <script src="judgments.js"></script>
+<script src="interpretations.js"></script>
 <style>
   /* ===== Reset & Base ===== */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -224,11 +225,46 @@
     color: #8a7a6a;
     letter-spacing: 1px;
   }
+  .judgment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .copy-btn {
+    font-size: 11px;
+    padding: 2px 10px;
+    border: 1px solid #c4b8aa;
+    border-radius: 4px;
+    background: #fefcf9;
+    color: #7a6a5a;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: inherit;
+    line-height: 1.6;
+  }
+  .copy-btn:hover {
+    background: #ede6dc;
+    border-color: #b8a088;
+  }
+  .copy-btn.copied {
+    background: #d4e0c8;
+    border-color: #8aaa6a;
+    color: #4a7a3a;
+  }
   .judgment-box .text {
     font-size: 15px;
     line-height: 1.7;
     margin-top: 6px;
     color: #4d3a2a;
+  }
+  .judgment-box.interpretation {
+    border-left-color: #6a8a6a;
+    background: #f0f5ee;
+  }
+  .judgment-box.interpretation .text {
+    font-size: 14px;
+    color: #3a5a3a;
   }
 
   /* ===== Loading ===== */
@@ -289,8 +325,15 @@
 
     <!-- Judgment -->
     <div class="judgment-box" id="judgmentBox">
-      <div class="label" id="judgmentLabel">爻辞</div>
+      <div class="judgment-header">
+        <div class="label" id="judgmentLabel">爻辞</div>
+        <button class="copy-btn" id="copyBtn">复制</button>
+      </div>
       <div class="text" id="judgmentText"></div>
+    </div>
+    <div class="judgment-box interpretation" id="interpretationBox">
+      <div class="label">白话解析</div>
+      <div class="text" id="interpretationText"></div>
     </div>
   </div>
 
@@ -560,12 +603,19 @@ function displayResult(result) {
 
   // 断语
   const yaos = JUDGMENTS[result.key];
+  const interps = INTERPRETATIONS[result.key];
   if (yaos) {
-    document.getElementById('judgmentLabel').textContent = '▎' + YAO_NAMES[result.yaoIndex] + '动 · 断语';
+    document.getElementById('judgmentLabel').textContent = '▎' + YAO_NAMES[result.yaoIndex] + '动 · 爻辞';
     document.getElementById('judgmentText').textContent = yaos[result.yaoIndex];
   } else {
     document.getElementById('judgmentLabel').textContent = '爻辞';
     document.getElementById('judgmentText').textContent = '暂无断语。';
+  }
+  // 白话解析
+  if (interps) {
+    document.getElementById('interpretationText').textContent = interps[result.yaoIndex];
+  } else {
+    document.getElementById('interpretationText').textContent = '暂无解析。';
   }
 }
 
@@ -617,6 +667,34 @@ inputEl.addEventListener('input', function() {
   if (!isComposing && this.value.length > 2) {
     this.value = this.value.slice(0, 2);
   }
+});
+
+// 复制爻辞
+document.getElementById('copyBtn').addEventListener('click', function() {
+  const text = document.getElementById('judgmentText').textContent;
+  if (!text || text === '暂无断语。') return;
+  navigator.clipboard.writeText(text).then(() => {
+    this.textContent = '已复制';
+    this.classList.add('copied');
+    setTimeout(() => {
+      this.textContent = '复制';
+      this.classList.remove('copied');
+    }, 1800);
+  }).catch(() => {
+    // fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    this.textContent = '已复制';
+    this.classList.add('copied');
+    setTimeout(() => {
+      this.textContent = '复制';
+      this.classList.remove('copied');
+    }, 1800);
+  });
 });
 </script>
 </body>
